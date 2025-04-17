@@ -17,19 +17,19 @@ public class FilmController {
     FilmHandler filmHandler = new FilmHandler();
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film){
+    public Film create(@Valid @RequestBody Film film) {
         log.info("Начато создание фильма. Получен объект {}", film);
         return filmHandler.create(film);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film){
+    public Film update(@Valid @RequestBody Film film) {
         log.info("Начато обновление фильма. Получен объект {}", film);
         return filmHandler.update(film);
     }
 
     @GetMapping
-    public List<Film> getAll(){
+    public List<Film> getAll() {
         return filmHandler.getAll();
     }
 
