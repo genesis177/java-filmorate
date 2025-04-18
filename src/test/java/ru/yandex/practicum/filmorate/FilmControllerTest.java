@@ -48,6 +48,7 @@ class FilmControllerTest {
             throw new RuntimeException("Не открывается файл: " + filename, exception);
         }
     }
+
 }
 
 

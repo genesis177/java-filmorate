@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FilmController {
 
-    FilmHandler filmHandler = new FilmHandler();
+    private final FilmHandler filmHandler; // внедряем через конструктор
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
@@ -33,6 +33,6 @@ public class FilmController {
     public List<Film> getAll() {
         return filmHandler.getAll();
     }
-
-
 }
+
+

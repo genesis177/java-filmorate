@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FilmHandler {
 
     private final Map<Long, Film> storage = new HashMap<>();
@@ -33,4 +35,5 @@ public class FilmHandler {
     public List<Film> getAll() {
         return new ArrayList<>(storage.values());
     }
+
 }
