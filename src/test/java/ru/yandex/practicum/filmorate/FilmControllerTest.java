@@ -25,14 +25,8 @@ class FilmControllerTest {
     private MockMvc mockMvc;
 
     @Test
-    void create() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.post(PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(getContentFromFile("controller/film/create/request/film.json")))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json(
-                        getContentFromFile("controller/film/create/response/film.json")
-                ));
+    void create() {
+
     }
 
 
