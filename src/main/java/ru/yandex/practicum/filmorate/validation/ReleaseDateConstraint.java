@@ -1,12 +1,9 @@
 package ru.yandex.practicum.filmorate.validation;
 
 import jakarta.validation.Constraint;
-
-import java.lang.annotation.*;
-
-
 import jakarta.validation.Payload;
 
+import java.lang.annotation.*;
 
 @Documented
 @Constraint(validatedBy = ReleaseDateValidator.class)
@@ -19,4 +16,3 @@ public @interface ReleaseDateConstraint {
 
     Class<? extends Payload>[] payload() default {};
 }
-

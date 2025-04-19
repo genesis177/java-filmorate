@@ -1,10 +1,10 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -12,7 +12,6 @@ import java.util.List;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
-
     private final UserHandler userHandler;
 
     @PostMapping
@@ -31,3 +30,4 @@ public class UserController {
         return userHandler.getAll();
     }
 }
+

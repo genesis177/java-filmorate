@@ -1,8 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 
@@ -43,3 +43,4 @@ public class UserHandler {
         return user;
     }
 }
+

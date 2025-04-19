@@ -28,4 +28,3 @@ public class User {
     @Past(message = "Дата рождения должна быть в прошлом")
     private LocalDate birthday;
 }
-
