@@ -1,9 +1,14 @@
 package ru.yandex.practicum.filmorate.model;
 
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.LocalDate;
 
@@ -23,7 +28,10 @@ public class User {
     @Past
     private LocalDate birthday;
 
-    public User() {
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public User create(@Valid @RequestBody User user) {
+        return user.create(user);
     }
 
     public User(Long id, String name, String login, String email, LocalDate birthday) {

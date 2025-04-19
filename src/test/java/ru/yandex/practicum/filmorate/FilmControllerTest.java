@@ -5,12 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.ResourceUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+
+import static org.springframework.mock.http.server.reactive.MockServerHttpRequest.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = ru.yandex.practicum.filmorate.FilmorateApplication.class)
 @AutoConfigureMockMvc
@@ -35,6 +39,15 @@ class FilmControllerTest {
     @Test
     void getAll() {
 
+    }
+
+    @Test
+    void createUserWithEmptyNameShouldReturnBadRequest() throws Exception {
+        String userJson = "{ \"login\": \"testlogin\", \"email\": \"test@mail.com\", \"birthday\": \"2000-01-01\" }";
+        mockMvc.perform((org.springframework.test.web.servlet.RequestBuilder) post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.valueOf(userJson)))
+                .andExpect(status().isBadRequest());
     }
 
     private String getContentFromFile(String filename) {
