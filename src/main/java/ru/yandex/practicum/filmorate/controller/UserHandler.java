@@ -12,6 +12,9 @@ public class UserHandler {
     private long generatedId = 0;
 
     public User create(User user) {
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            user.setName(user.getLogin());
+        }
         user.setId(++generatedId);
         storage.put(user.getId(), user);
         return user;

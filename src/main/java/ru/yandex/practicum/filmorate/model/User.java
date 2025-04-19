@@ -47,6 +47,7 @@ public class User {
         return name;
     }
 
+
     public void setName(String name) {
         this.name = name;
     }
@@ -74,4 +75,5 @@ public class User {
     public void setBirthday(LocalDate birthday) {
         this.birthday = birthday;
     }
+
 }
