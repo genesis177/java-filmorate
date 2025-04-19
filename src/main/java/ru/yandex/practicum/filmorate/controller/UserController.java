@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import jakarta.validation.Valid;
@@ -10,12 +11,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-
 public class UserController {
 
     private final UserHandler userHandler;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public User create(@Valid @RequestBody User user) {
         return userHandler.create(user);
     }
@@ -30,3 +31,5 @@ public class UserController {
         return userHandler.getAll();
     }
 }
+
+

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import org.springframework.http.HttpStatus;
 
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class FilmController {
     private final FilmHandler filmHandler;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Film create(@Valid @RequestBody Film film) {
         log.info("Начато создание фильма. Получен объект {}", film);
         return filmHandler.create(film);
