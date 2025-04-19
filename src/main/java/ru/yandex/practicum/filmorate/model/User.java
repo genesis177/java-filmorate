@@ -4,6 +4,7 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
+
 import java.time.LocalDate;
 
 public class User {
@@ -22,7 +23,8 @@ public class User {
     @Past
     private LocalDate birthday;
 
-    public User() {}
+    public User() {
+    }
 
     public User(Long id, String name, String login, String email, LocalDate birthday) {
         this.id = id;
@@ -33,14 +35,43 @@ public class User {
     }
 
     // геттеры и сеттеры
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getLogin() { return login; }
-    public void setLogin(String login) { this.login = login; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public LocalDate getBirthday() { return birthday; }
-    public void setBirthday(LocalDate birthday) { this.birthday = birthday; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public LocalDate getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(LocalDate birthday) {
+        this.birthday = birthday;
+    }
 }
