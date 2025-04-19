@@ -46,7 +46,7 @@ class FilmControllerTest {
 
     @Test
     void createUserWithEmptyNameShouldReturnBadRequest() throws Exception {
-        String userJson = "{ \"login\": \"login\", \"email\": \"test@mail.com\", \"birthday\": \"2000-01-01\" }";
+        String userJson = "{ \"name\": \"\", \"login\": \"login\", \"email\": \"test@mail.com\", \"birthday\": \"2000-01-01\" }";
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userJson))

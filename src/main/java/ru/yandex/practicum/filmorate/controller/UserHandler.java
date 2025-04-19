@@ -24,6 +24,9 @@ public class UserHandler {
         if (user.getId() == null || !storage.containsKey(user.getId())) {
             throw new DataNotFoundException("Пользователь не найден");
         }
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            user.setName(user.getLogin());
+        }
         storage.put(user.getId(), user);
         return user;
     }

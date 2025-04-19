@@ -1,87 +1,31 @@
 package ru.yandex.practicum.filmorate.model;
 
-
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Имя не может быть пустым")
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "Логин не может быть пустым")
     private String login;
 
-    @Email
-    @NotBlank
+    @Email(message = "Некорректный формат email")
+    @NotBlank(message = "Email не может быть пустым")
     private String email;
 
-    @Past
+    @Past(message = "Дата рождения должна быть в прошлом")
     private LocalDate birthday;
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) {
-        return user.create(user);
-    }
-
-    public User(Long id, String name, String login, String email, LocalDate birthday) {
-        this.id = id;
-        this.name = name;
-        this.login = login;
-        this.email = email;
-        this.birthday = birthday;
-    }
-
-    // геттеры и сеттеры
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public LocalDate getBirthday() {
-        return birthday;
-    }
-
-    public void setBirthday(LocalDate birthday) {
-        this.birthday = birthday;
-    }
-
 }
+
