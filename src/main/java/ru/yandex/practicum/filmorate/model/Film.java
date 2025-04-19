@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.validation.ReleaseDateConstraint;
 
 import java.time.LocalDate;
 
@@ -17,19 +18,19 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class Film {
 
-
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Название фильма не может быть пустым")
     private String name;
 
-    @Size(min = 1, max = 255)
+    @Size(min = 1, max = 255, message = "Описание должно быть от 1 до 255 символов")
     private String description;
 
-    @Min(1)
+    @NotNull(message = "Длительность фильма обязательна")
+    @Min(value = 1, message = "Длительность должна быть положительным числом")
     private Long duration;
 
-    @NotNull
+    @NotNull(message = "Дата релиза обязательна")
+    @ReleaseDateConstraint
     private LocalDate releaseDate;
-
 }
