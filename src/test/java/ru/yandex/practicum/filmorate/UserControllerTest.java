@@ -30,16 +30,19 @@ public class UserControllerTest {
         user.setName(name);
         user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
         String content = mapper.writeValueAsString(user);
+
         String response = mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content))
+                .andExpect(status().isCreated()) // ожидаем 201 Created
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse().getContentAsString();
 
         return mapper.readValue(response, User.class).getId();
     }
 
     @Test
-    public void createUser_ShouldReturnStatus200AndBody() throws Exception {
+    public void createUser_ShouldReturnStatus201AndBody() throws Exception {
         User user = new User();
         user.setEmail("testuser@example.com");
         user.setLogin("test login");
@@ -49,7 +52,7 @@ public class UserControllerTest {
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
@@ -91,26 +94,39 @@ public class UserControllerTest {
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
         long id = createTestUser("update@example.com", "update login", "Update");
-        User user = new User();
-        user.setId(id);
-        user.setEmail("update@example.com");
-        user.setLogin("update login");
-        user.setName("Updated Name");
-        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
+
+        User updatedUser = new User();
+        updatedUser.setId(id);
+        updatedUser.setEmail("update@example.com");
+
+        // Можно оставить имя пустым или задать новое имя
+        updatedUser.setLogin("update login");
+
+        // Обновляем имя на новое значение
+        updatedUser.setName("Updated Name");
+
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
+                        .content(mapper.writeValueAsString(updatedUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
+
+        // Проверка, что обновление прошло успешно
+        mvc.perform(get("/users/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Name"));
+
     }
 
     @Test
     public void deleteUser_ShouldRemoveUser() throws Exception {
         long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
+
+        // Удаляем пользователя
         mvc.perform(delete("/users/" + id))
                 .andExpect(status().isOk());
 
-        // Проверка, что пользователь удален
+        // Проверка что пользователь удален - запрос должен вернуть 404
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }

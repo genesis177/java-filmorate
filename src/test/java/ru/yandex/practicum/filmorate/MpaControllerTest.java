@@ -25,7 +25,10 @@ public class MpaControllerTest {
     public void getAllMpa_ShouldReturnList() throws Exception {
         mvc.perform(get("/mpa"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("G"));
     }
 
     @Test
@@ -33,7 +36,17 @@ public class MpaControllerTest {
         mvc.perform(get("/mpa/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").exists());
+                .andExpect(jsonPath("$.name").value("G"));
+
+        mvc.perform(get("/mpa/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2))
+                .andExpect(jsonPath("$.name").value("PG"));
+
+        mvc.perform(get("/mpa/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(3))
+                .andExpect(jsonPath("$.name").value("PG-13"));
     }
 
     @Test

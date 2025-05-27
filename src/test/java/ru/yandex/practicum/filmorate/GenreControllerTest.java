@@ -35,7 +35,7 @@ public class GenreControllerTest {
         mvc.perform(get("/genres/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").exists());
+                .andExpect(jsonPath("$.name").value("Комедия")); // убедитесь, что имя совпадает
     }
 
     @Test
