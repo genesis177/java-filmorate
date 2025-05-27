@@ -57,7 +57,7 @@ public class UserJdbcRepository implements UserStorage {
         @Override
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
             User user = new User();
-            user.setId(rs.getLong("id"));  // Используем getLong
+            user.setId(rs.getLong("id")); // используем getLong
             user.setEmail(rs.getString("email"));
             user.setLogin(rs.getString("login"));
             user.setName(rs.getString("name"));

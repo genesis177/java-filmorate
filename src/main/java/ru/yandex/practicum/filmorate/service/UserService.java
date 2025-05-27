@@ -18,12 +18,12 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public User getUserById(Integer id) {
+    public User getUserById(Long id) {
         return userStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
     }
 
     public User addUser(User user) {
-        ValidationUtil.validateUser(user); // Вызов валидации
+        ValidationUtil.validateUser(user);
         return userStorage.add(user);
     }
 
@@ -36,41 +36,44 @@ public class UserService {
         return userStorage.getAll();
     }
 
-    public void addFriend(Integer userId, Integer friendId) {
+    public void addFriend(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
+        if (user.getFriends().contains(friendId)) {
+            throw new IllegalStateException("Пользователь уже в друзьях");
+        }
         user.getFriends().add(friendId);
         userStorage.update(user);
     }
 
-    public void removeFriend(Integer userId, Integer friendId) {
+    public void removeFriend(Long userId, Long friendId) {
         User user = getUserById(userId);
         user.getFriends().remove(friendId);
         userStorage.update(user);
     }
 
-    public List<User> getFriends(Integer userId) {
+    public List<User> getFriends(Long userId) {
         User user = getUserById(userId);
         List<User> friends = new ArrayList<>();
-        for (Integer fid : user.getFriends()) {
+        for (Long fid : user.getFriends()) {
             userStorage.getById(fid).ifPresent(friends::add);
         }
         return friends;
     }
 
-    public List<User> getCommonFriends(Integer userId, Integer otherId) {
+    public List<User> getCommonFriends(Long userId, Long otherId) {
         User user = getUserById(userId);
         User otherUser = getUserById(otherId);
-        Set<Integer> commonIds = new HashSet<>(user.getFriends());
+        Set<Long> commonIds = new HashSet<>(user.getFriends());
         commonIds.retainAll(otherUser.getFriends());
         List<User> commonFriends = new ArrayList<>();
-        for (Integer id : commonIds) {
+        for (Long id : commonIds) {
             userStorage.getById(id).ifPresent(commonFriends::add);
         }
         return commonFriends;
     }
 
-    public void sendFriendRequest(Integer userId, Integer friendId) {
+    public void sendFriendRequest(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
         if (user.getFriends().contains(friendId)) {
@@ -80,12 +83,12 @@ public class UserService {
         updateUser(user);
     }
 
-    public void confirmFriendship(Integer userId, Integer friendId) {
+    public void confirmFriendship(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
-        updateUser(user);
-        updateUser(friend);
+        userStorage.update(user);
+        userStorage.update(friend);
     }
 }

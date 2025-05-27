@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
+    private final Map<Long, User> users = new ConcurrentHashMap<>();
+    private final AtomicLong idCounter = new AtomicLong(1);
 
     @Override
     public User add(User user) {
@@ -37,8 +39,4 @@ public class InMemoryUserStorage implements UserStorage {
     public List<User> getAll() {
         return new ArrayList<>(users.values());
     }
-
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-    private final AtomicLong idCounter = new AtomicLong(1);
 }
-

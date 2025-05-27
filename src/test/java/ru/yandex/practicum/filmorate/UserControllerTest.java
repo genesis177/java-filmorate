@@ -42,7 +42,7 @@ public class UserControllerTest {
     public void createUser_ShouldReturnStatus200AndBody() throws Exception {
         User user = new User();
         user.setEmail("testuser@example.com");
-        user.setLogin("testlogin");
+        user.setLogin("test login");
         user.setName("Test Name");
         user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
 
@@ -54,7 +54,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
                 .andExpect(jsonPath("$.name").value("Test Name"))
-                .andExpect(jsonPath("$.login").value("testlogin"))
+                .andExpect(jsonPath("$.login").value("test login"))
                 .andExpect(jsonPath("$.birthday").value("1990-01-01"));
     }
 
@@ -74,7 +74,7 @@ public class UserControllerTest {
 
     @Test
     public void getUserById_ShouldReturnUser() throws Exception {
-        long id = createTestUser("getuser@example.com", "getlogin", "Get User");
+        long id = createTestUser("getuser@example.com", "get login", "Get User");
 
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
@@ -90,9 +90,9 @@ public class UserControllerTest {
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
-        long id = createTestUser("update@example.com", "updatelogin", "Update");
+        long id = createTestUser("update@example.com", "update login", "Update");
         User user = new User();
-        user.setId((int) id);
+        user.setId(id);
         user.setEmail("update@example.com");
         user.setLogin("update login");
         user.setName("Updated Name");
