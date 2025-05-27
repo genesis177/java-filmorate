@@ -24,7 +24,7 @@ public class UserJdbcRepository implements UserStorage {
     public User add(User user) {
         String sql = "INSERT INTO USERS (email, login, name, birthday) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), java.sql.Date.valueOf(user.getBirthday()));
-        Integer id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM USERS", Integer.class);
+        Long id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM USERS", Long.class);
         user.setId(id);
         return user;
     }
@@ -37,7 +37,7 @@ public class UserJdbcRepository implements UserStorage {
     }
 
     @Override
-    public Optional<User> getById(Integer id) {
+    public Optional<User> getById(Long id) {
         try {
             String sql = "SELECT * FROM USERS WHERE id = ?";
             User user = jdbcTemplate.queryForObject(sql, userRowMapper, id);
@@ -57,7 +57,7 @@ public class UserJdbcRepository implements UserStorage {
         @Override
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
             User user = new User();
-            user.setId(rs.getInt("id"));
+            user.setId(rs.getLong("id"));  // Используем getLong
             user.setEmail(rs.getString("email"));
             user.setLogin(rs.getString("login"));
             user.setName(rs.getString("name"));
@@ -66,15 +66,13 @@ public class UserJdbcRepository implements UserStorage {
             String friendIdsStr = rs.getString("friends");
             if (friendIdsStr != null && !friendIdsStr.isBlank()) {
                 String[] parts = friendIdsStr.split(",");
-                Set<Integer> friends = new HashSet<>();
+                Set<Long> friends = new HashSet<>();
                 for (String part : parts) {
-                    friends.add(Integer.parseInt(part.trim()));
+                    friends.add(Long.parseLong(part.trim()));
                 }
                 user.setFriends(friends);
             }
             return user;
         }
     };
-
 }
-
