@@ -14,4 +14,4 @@ public interface FilmStorage {
 
     List<Film> getAll();
 }
-
+//В этом классе объявляем стандартные операции для хранения фильмов

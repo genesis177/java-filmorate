@@ -4,22 +4,18 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
 public class Film {
-    private Integer id;
+    private Integer id; // Id фильма
     private String name;
-    private String description;
-
+    private String description; // Описание фильма
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate releaseDate;
-    private Integer duration;
-    private Set<Integer> genres;
-    private Integer mpaId;
-    private Set<Integer> likes;
-
-    public Film() {
-        // Конструктор по умолчанию
-    }
+    private LocalDate releaseDate; // Дата релиза
+    private Integer duration; // Продолжительность в минутах
+    private Set<Integer> genres; // Множество жанров (их id)
+    private Integer mpaId; // рейтинг MPAA по id
+    private Set<Long> likes = new HashSet<>(); // Множество ID пользователей, поставивших лайк
 }

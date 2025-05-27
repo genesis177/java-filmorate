@@ -21,6 +21,7 @@ public class MpaControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
+    //проверка, что при запросе /mpa возвращается список MPAA
     @Test
     public void getAllMpa_ShouldReturnList() throws Exception {
         mvc.perform(get("/mpa"))
@@ -31,6 +32,7 @@ public class MpaControllerTest {
                 .andExpect(jsonPath("$[0].name").value("G"));
     }
 
+    //проверка получения MPAA по валидным ID (1, 2, 3)
     @Test
     public void getMpa_ByValidId_ShouldReturnMpa() throws Exception {
         mvc.perform(get("/mpa/1"))
@@ -49,6 +51,7 @@ public class MpaControllerTest {
                 .andExpect(jsonPath("$.name").value("PG-13"));
     }
 
+    //получение MPAA по несуществующему ID, ожидается 404 Not Found
     @Test
     public void getMpa_ByInvalidId_ShouldReturn404() throws Exception {
         mvc.perform(get("/mpa/9999"))

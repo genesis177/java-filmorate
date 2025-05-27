@@ -42,6 +42,7 @@ public class UserControllerTest {
         return mapper.readValue(response, User.class).getId();
     }
 
+    //проверка, что создание пользователя возвращает статус 201 и правильное тело
     @Test
     public void createUser_ShouldReturnStatus201AndBody() throws Exception {
         User user = new User();
@@ -62,6 +63,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.birthday").value("1990-01-01"));
     }
 
+    //создание пользователя с некорректным email должно возвращать 400 Bad Request
     @Test
     public void createUser_WithInvalidEmail_ShouldReturn400() throws Exception {
         User user = new User();
@@ -76,6 +78,7 @@ public class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    //получение пользователя по существующему ID
     @Test
     public void getUserById_ShouldReturnUser() throws Exception {
         long id = createTestUser("getuser@example.com", "get login", "Get User");
@@ -86,12 +89,14 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email").value("getuser@example.com"));
     }
 
+    //запрос несуществующего пользователя должен возвращать 404 Not Found
     @Test
     public void getUserById_NotFound_ShouldReturn404() throws Exception {
         mvc.perform(get("/users/9999"))
                 .andExpect(status().isNotFound());
     }
 
+    //обновление пользователя
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
         long id = createTestUser("update@example.com", "update login", "Update");
@@ -119,6 +124,7 @@ public class UserControllerTest {
 
     }
 
+    //удаление пользователя
     @Test
     public void deleteUser_ShouldRemoveUser() throws Exception {
         long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
@@ -130,5 +136,51 @@ public class UserControllerTest {
         // Проверка, что пользователь удален - запрос должен вернуть 404
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
+    }
+
+    //тест на проверку даты рождения в будущем
+    @Test
+    public void createUser_WithFutureBirthday_ShouldReturn400() throws Exception {
+        User user = new User();
+        user.setEmail("futurebday@example.com");
+        user.setLogin("future");
+        user.setName("Future Birthday");
+        user.setBirthday(java.time.LocalDate.now().plusDays(1)); // дата в будущем
+
+        mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isBadRequest());
+    }
+
+    //обновление несуществующего пользователя
+    @Test
+    public void updateUser_NotFound_ShouldReturn404() throws Exception {
+        User user = new User();
+        user.setId(99999L);
+        user.setEmail("nonexistent@example.com");
+        user.setLogin("nonexistent");
+        user.setName("Nonexistent");
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
+
+        mvc.perform(put("/users/99999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isNotFound());
+    }
+
+    //тест на ошибки логина(например если он пустой)
+    @Test
+    public void createUser_WithBlankLogin_ShouldReturn400() throws Exception {
+        User user = new User();
+        user.setEmail("blanklogin@example.com");
+        user.setLogin(" "); // пробел
+        user.setName("Test");
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
+
+        mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isBadRequest());
     }
 }

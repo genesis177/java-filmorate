@@ -4,11 +4,10 @@ import lombok.Data;
 
 @Data
 public class Mpa {
-    private int id;
-    private String name;
+    private int id; // Идентификатор рейтинга
+    private String name; // Название рейтинга (G, PG и т.д.)
 
     public Mpa() {
-        // конструктор по умолчанию
     }
 
     public Mpa(int id, String name) {

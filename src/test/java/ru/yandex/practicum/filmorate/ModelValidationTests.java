@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = FinalProjectApplication.class)
 public class ModelValidationTests {
 
+    //проверка валидности правильного фильма
     @Test
     public void testValidFilm() {
         Film film = new Film();
@@ -24,6 +25,7 @@ public class ModelValidationTests {
         assertDoesNotThrow(() -> ValidationUtil.validateFilm(film));
     }
 
+    //проверка на то, что фильм с пустым названием не проходит валидацию
     @Test
     public void testInvalidFilmName() {
         Film film = new Film();
@@ -34,6 +36,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateFilm(film));
     }
 
+    //проверка, что описание слишком длинное не проходит валидацию
     @Test
     public void testInvalidFilmDescription() {
         Film film = new Film();
@@ -44,6 +47,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateFilm(film));
     }
 
+    // проверка, что дата релиза раньше 1800 года вызывает ошибку
     @Test
     public void testInvalidReleaseDate() {
         Film film = new Film();
@@ -54,6 +58,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateFilm(film));
     }
 
+    //проверка, что длительность равная 0 или меньше, вызывает ошибку
     @Test
     public void testInvalidDuration() {
         Film film = new Film();
@@ -64,6 +69,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateFilm(film));
     }
 
+    //проверка валидации корректного пользователя
     @Test
     public void testValidUser() {
         User user = new User();
@@ -75,6 +81,7 @@ public class ModelValidationTests {
         assertEquals("test login", user.getName());
     }
 
+    // тест на некорректную почту
     @Test
     public void testInvalidEmail() {
         User user = new User();
@@ -84,6 +91,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
     }
 
+    //пустой логин
     @Test
     public void testEmptyLogin() {
         User user = new User();
@@ -93,6 +101,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
     }
 
+    // если логин состоит только из пробелов
     @Test
     public void testLoginWithSpaces() {
         User user = new User();
@@ -102,6 +111,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
     }
 
+    //дата рождения в будущем
     @Test
     public void testFutureBirthday() {
         User user = new User();
@@ -111,6 +121,7 @@ public class ModelValidationTests {
         assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
     }
 
+    //тест на правильность даты рождения
     @Test
     public void testValidBirthday() {
         User user = new User();
@@ -120,6 +131,7 @@ public class ModelValidationTests {
         assertDoesNotThrow(() -> ValidationUtil.validateUser(user));
     }
 
+    //если поле name пустое, оно должно автоматически заполниться логином
     @Test
     public void testNullNameDefaultsToLogin() {
         User user = new User();

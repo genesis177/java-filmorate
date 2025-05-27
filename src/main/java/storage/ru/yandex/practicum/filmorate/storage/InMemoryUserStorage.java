@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+//Реализация хранения пользователей в памяти
 @Component
 public class InMemoryUserStorage implements UserStorage {
 

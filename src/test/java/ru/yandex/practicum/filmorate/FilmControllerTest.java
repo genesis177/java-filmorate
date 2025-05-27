@@ -200,4 +200,49 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
+
+    // Получение фильма с жанрами, у которого отсутствует продолжительность
+    @Test
+    public void getFilmWithGenreWithoutDuration_ShouldReturnFilm() throws Exception {
+        // Создаем фильм без duration
+        var film = new ru.yandex.practicum.filmorate.model.Film();
+        film.setName("Test Film No Duration");
+        film.setDescription("Description");
+        film.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film.setGenres(Set.of(1, 2));
+        film.setMpaId(1);
+        film.setDuration(null); // или 0, если разрешено
+
+        // Создаем фильм через API
+        String responseContent = mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        var createdFilm = mapper.readValue(responseContent, ru.yandex.practicum.filmorate.model.Film.class);
+
+        // Проверяем, что фильм получен и жанры есть
+        mvc.perform(get("/films/" + createdFilm.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.genres").isArray())
+                .andExpect(jsonPath("$.genres").value(org.hamcrest.Matchers.hasItems(1, 2)))
+                .andExpect(jsonPath("$.duration").value(createdFilm.getDuration() == null ? 0 : createdFilm.getDuration()));
+    }
+
+    @Test
+    public void createFilmFailGenre_ShouldReturn400() throws Exception {
+        var film = new ru.yandex.practicum.filmorate.model.Film();
+        film.setName("Invalid Genre Film");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film.setDuration(100);
+        film.setMpaId(1);
+        film.setGenres(Set.of(9999)); // несуществующий жанр
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest());
+    }
 }

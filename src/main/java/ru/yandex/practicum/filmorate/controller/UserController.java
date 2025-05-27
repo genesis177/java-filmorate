@@ -14,18 +14,19 @@ import java.util.NoSuchElementException;
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserService userService;
+    private final UserService userService; // бизнес-логика по пользователям
 
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    // Создать пользователя
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         try {
-            user.setName(user.getName() == null ? user.getLogin() : user.getName());
-            // Валидацию можно оставить внутри сервиса или util
+            // Если имя пустое, заполняем логином
+            user.setName(user.getName() == null || user.getName().isBlank() ? user.getLogin() : user.getName());
             User created = userService.addUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
@@ -33,6 +34,7 @@ public class UserController {
         }
     }
 
+    // Получить пользователя по id
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable Long id) {
         try {
@@ -43,6 +45,7 @@ public class UserController {
         }
     }
 
+    // Обновить пользователя
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         try {
@@ -56,6 +59,7 @@ public class UserController {
         }
     }
 
+    // Удалить пользователя
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
@@ -66,6 +70,7 @@ public class UserController {
         }
     }
 
+    // Получить всех пользователей
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());

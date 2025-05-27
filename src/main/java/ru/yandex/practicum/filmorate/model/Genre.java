@@ -4,11 +4,10 @@ import lombok.Data;
 
 @Data
 public class Genre {
-    private int id;
-    private String name;
+    private int id; // Идентификатор жанра
+    private String name; // Название жанра
 
     public Genre() {
-        // конструктор по умолчанию
     }
 
     public Genre(int id, String name) {

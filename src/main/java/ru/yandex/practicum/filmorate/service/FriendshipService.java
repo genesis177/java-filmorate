@@ -14,11 +14,9 @@ public class FriendshipService {
 
     private final UserStorage userStorage;
 
-    // Статусы дружбы
     private static final String PENDING = "PENDING";
     private static final String CONFIRMED = "CONFIRMED";
 
-    // Хранилище дружбы (можно заменить на таблицу)
     private final List<Friendship> friendships = new ArrayList<>();
 
     @Autowired
@@ -26,12 +24,10 @@ public class FriendshipService {
         this.userStorage = userStorage;
     }
 
-    // Отправка заявки
     public void sendFriendRequest(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
 
-        // Проверка, есть ли уже дружба или заявка
         if (areFriends(userId, friendId)) {
             throw new IllegalStateException("Пользователь уже в друзьях");
         }
@@ -40,11 +36,9 @@ public class FriendshipService {
             throw new IllegalStateException("Заявка уже отправлена");
         }
 
-        Friendship friendship = new Friendship(userId, friendId, PENDING, LocalDateTime.now());
-        friendships.add(friendship);
+        friendships.add(new Friendship(userId, friendId, PENDING, LocalDateTime.now()));
     }
 
-    // Подтверждение дружбы
     public void confirmFriendship(Long userId, Long friendId) {
         Optional<Friendship> f1 = findFriendship(userId, friendId);
         Optional<Friendship> f2 = findFriendship(friendId, userId);
@@ -52,16 +46,15 @@ public class FriendshipService {
         if (f1.isEmpty() || f2.isEmpty()) {
             throw new NoSuchElementException("Заявка не найдена");
         }
+
         if (!f1.get().getStatus().equals(PENDING) || !f2.get().getStatus().equals(PENDING)) {
             throw new IllegalStateException("Дружба уже подтверждена");
         }
 
-        // Обновляем статус
         f1.get().setStatus(CONFIRMED);
         f2.get().setStatus(CONFIRMED);
     }
 
-    // Удаление дружбы
     public void removeFriend(Long userId, Long friendId) {
         Optional<Friendship> f1 = findFriendship(userId, friendId);
         Optional<Friendship> f2 = findFriendship(friendId, userId);
@@ -74,7 +67,6 @@ public class FriendshipService {
         friendships.remove(f2.get());
     }
 
-    // Получение друзей пользователя
     public Set<Long> getFriends(Long userId) {
         Set<Long> friends = new HashSet<>();
         for (Friendship f : friendships) {
@@ -87,7 +79,6 @@ public class FriendshipService {
         return friends;
     }
 
-    // Получение общих друзей
     public Set<Long> getCommonFriends(Long userId, Long otherId) {
         Set<Long> friends1 = getFriends(userId);
         Set<Long> friends2 = getFriends(otherId);

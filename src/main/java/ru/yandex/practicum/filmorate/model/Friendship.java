@@ -6,10 +6,10 @@ import java.time.LocalDateTime;
 
 @Data
 public class Friendship {
-    private Long userId;
-    private Long friendId;
+    private Long userId; // ID инициатора заявки
+    private Long friendId; // ID получателя заявки
     private String status; // PENDING или CONFIRMED
-    private LocalDateTime requestTime;
+    private LocalDateTime requestTime; // Время заявки
 
     public Friendship(Long userId, Long friendId, String status, LocalDateTime requestTime) {
         this.userId = userId;

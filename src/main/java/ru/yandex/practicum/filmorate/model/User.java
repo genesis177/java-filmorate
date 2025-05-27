@@ -9,14 +9,14 @@ import java.util.Set;
 
 @Data
 public class User {
-    private Long id;
+    private Long id; // Идентификатор пользователя
     private String email;
-    private String login;
-    private String name;
+    private String login; // Логин пользователя
+    private String name; // Имя пользователя, может быть пустым, тогда заполняется логином
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate birthday;
+    @JsonFormat(pattern = "yyyy-MM-dd") // Формат даты при сериализации/десериализации
+    private LocalDate birthday; // День рождения
 
-    private Set<Long> friends = new HashSet<>();
-    private Set<Long> pendingRequests = new HashSet<>();
+    private Set<Long> friends = new HashSet<>(); // Множество ID друзей
+    private Set<Long> pendingRequests = new HashSet<>(); // Множество входящих заявок
 }

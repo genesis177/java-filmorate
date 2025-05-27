@@ -14,8 +14,8 @@ import java.util.Set;
 @RequestMapping("/users")
 public class FriendshipController {
 
-    private final UserService userService;
-    private final FriendshipService friendshipService;
+    private final UserService userService; // для проверки существования пользователя
+    private final FriendshipService friendshipService; // бизнес-логика дружбы
 
     @Autowired
     public FriendshipController(UserService userService, FriendshipService friendshipService) {
@@ -23,6 +23,7 @@ public class FriendshipController {
         this.friendshipService = friendshipService;
     }
 
+    // Проверка существования пользователя
     private boolean userExists(Long userId) {
         try {
             userService.getUserById(userId);
@@ -32,6 +33,7 @@ public class FriendshipController {
         }
     }
 
+    // Отправка заявки в друзья
     @PostMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         if (!userExists(id) || !userExists(friendId)) {
@@ -45,6 +47,7 @@ public class FriendshipController {
         }
     }
 
+    // Подтверждение дружбы
     @PostMapping("/{id}/friends/{friendId}/confirm")
     public ResponseEntity<?> confirmFriendship(@PathVariable Long id, @PathVariable Long friendId) {
         if (!userExists(id) || !userExists(friendId)) {
@@ -58,6 +61,7 @@ public class FriendshipController {
         }
     }
 
+    // Удаление дружбы
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
         if (!userExists(id) || !userExists(friendId)) {
@@ -71,6 +75,7 @@ public class FriendshipController {
         }
     }
 
+    // Получить список друзей
     @GetMapping("/{id}/friends")
     public ResponseEntity<Set<Long>> getFriends(@PathVariable Long id) {
         if (!userExists(id)) {
@@ -80,6 +85,7 @@ public class FriendshipController {
         return ResponseEntity.ok(friends);
     }
 
+    // Получить общих друзей
     @GetMapping("/{id}/common-friends/{otherId}")
     public ResponseEntity<Set<Long>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         if (!userExists(id) || !userExists(otherId)) {

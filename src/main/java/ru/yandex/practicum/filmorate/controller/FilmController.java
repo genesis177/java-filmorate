@@ -15,29 +15,32 @@ import java.util.NoSuchElementException;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final FilmService filmService;
+    private final FilmService filmService; // бизнес-логика по фильмам
 
     @Autowired
     public FilmController(FilmService filmService) {
         this.filmService = filmService;
     }
 
+    // Создать фильм
     @PostMapping
     public ResponseEntity<Film> createFilm(@RequestBody Film film) {
         try {
-            ValidationUtil.validateFilm(film);
-            Film created = filmService.addFilm(film);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            ValidationUtil.validateFilm(film); // валидация входных данных
+            Film created = filmService.addFilm(film); // добавляем в хранилище
+            return ResponseEntity.status(HttpStatus.CREATED).body(created); // статус 201
         } catch (AssertionError | IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // ошибка в данных
         }
     }
 
+    // Обновить фильм по id
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
         try {
             ValidationUtil.validateFilm(film);
             film.setId(id);
+            // Обновляем фильм, если есть, возвращаем 200, иначе 404
             return filmService.updateFilm(film)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -46,6 +49,7 @@ public class FilmController {
         }
     }
 
+    // Получить фильм по id
     @GetMapping("/{id}")
     public ResponseEntity<Film> getFilm(@PathVariable Integer id) {
         try {
@@ -56,12 +60,14 @@ public class FilmController {
         }
     }
 
+    // Получить все фильмы
     @GetMapping
     public ResponseEntity<List<Film>> getAllFilms() {
         List<Film> films = filmService.getAllFilms();
         return ResponseEntity.ok(films);
     }
 
+    // Получить популярные фильмы (по лайкам)
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> getPopular(@RequestParam(defaultValue = "10") int count) {
         List<Film> popularFilms = filmService.getPopularFilms(count);

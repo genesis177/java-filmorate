@@ -7,8 +7,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+//Временное хранилище для тестирования/разработки
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
+    private final Map<Integer, Film> films = new ConcurrentHashMap<>();
+    private final AtomicInteger idCounter = new AtomicInteger(1);
 
     @Override
     public Film add(Film film) {
@@ -36,8 +39,4 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Film> getAll() {
         return new ArrayList<>(films.values());
     }
-
-    private final Map<Integer, Film> films = new ConcurrentHashMap<>();
-    private final AtomicInteger idCounter = new AtomicInteger(1);
 }
-
