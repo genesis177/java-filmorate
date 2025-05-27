@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.service.FriendshipService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/users")
@@ -59,6 +60,24 @@ public class FriendshipController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/friends")
+    public ResponseEntity<Set<Long>> getFriends(@PathVariable Long id) {
+        if (!userExists(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Set<Long> friends = friendshipService.getFriends(id);
+        return ResponseEntity.ok(friends);
+    }
+
+    @GetMapping("/{id}/common-friends/{otherId}")
+    public ResponseEntity<Set<Long>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        if (!userExists(id) || !userExists(otherId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Set<Long> commonFriends = friendshipService.getCommonFriends(id, otherId);
+        return ResponseEntity.ok(commonFriends);
     }
 
     private boolean userExists(Long userId) {

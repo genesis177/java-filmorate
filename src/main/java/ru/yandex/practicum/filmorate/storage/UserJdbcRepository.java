@@ -1,21 +1,20 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
-@Repository
+@Component
 public class UserJdbcRepository implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
     public UserJdbcRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -24,7 +23,7 @@ public class UserJdbcRepository implements UserStorage {
     public User add(User user) {
         String sql = "INSERT INTO USERS (email, login, name, birthday) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), java.sql.Date.valueOf(user.getBirthday()));
-        Long id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM USERS", Long.class);
+        Long id = jdbcTemplate.queryForObject("SELECT LASTVAL()", Long.class); // или "SELECT MAX(id)" в зависимости от базы
         user.setId(id);
         return user;
     }
@@ -53,26 +52,19 @@ public class UserJdbcRepository implements UserStorage {
         return jdbcTemplate.query(sql, userRowMapper);
     }
 
-    private final RowMapper<User> userRowMapper = new RowMapper<>() {
-        @Override
-        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            User user = new User();
-            user.setId(rs.getLong("id")); // используем getLong
-            user.setEmail(rs.getString("email"));
-            user.setLogin(rs.getString("login"));
-            user.setName(rs.getString("name"));
-            user.setBirthday(rs.getDate("birthday").toLocalDate());
-            // загрузка друзей
-            String friendIdsStr = rs.getString("friends");
-            if (friendIdsStr != null && !friendIdsStr.isBlank()) {
-                String[] parts = friendIdsStr.split(",");
-                Set<Long> friends = new HashSet<>();
-                for (String part : parts) {
-                    friends.add(Long.parseLong(part.trim()));
-                }
-                user.setFriends(friends);
-            }
-            return user;
-        }
+    public void delete(Long id) {
+        String sql = "DELETE FROM USERS WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    private final RowMapper<User> userRowMapper = (rs, rowNum) -> {
+        User user = new User();
+        user.setId(rs.getLong("id"));
+        user.setEmail(rs.getString("email"));
+        user.setLogin(rs.getString("login"));
+        user.setName(rs.getString("name"));
+        user.setBirthday(rs.getDate("birthday").toLocalDate());
+        // если есть поле friends - оно должно быть сериализовано, либо отдельной таблицей
+        return user;
     };
 }

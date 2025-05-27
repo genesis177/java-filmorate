@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/users")
@@ -22,8 +23,12 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        User created = userService.addUser(user);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+        try {
+            User created = userService.addUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @GetMapping("/{id}")
@@ -31,7 +36,7 @@ public class UserController {
         try {
             User user = userService.getUserById(id);
             return ResponseEntity.ok(user);
-        } catch (Exception e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -42,8 +47,10 @@ public class UserController {
             user.setId(id);
             User updated = userService.updateUser(user).orElseThrow();
             return ResponseEntity.ok(updated);
-        } catch (Exception e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
@@ -52,7 +59,7 @@ public class UserController {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }

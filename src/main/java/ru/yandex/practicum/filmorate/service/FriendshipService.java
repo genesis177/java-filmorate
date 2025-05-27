@@ -6,14 +6,19 @@ import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDateTime;
 import java.util.*;
+import java.time.LocalDateTime;
 
 @Service
 public class FriendshipService {
 
     private final UserStorage userStorage;
 
+    // Статусы дружбы
+    private static final String PENDING = "PENDING";
+    private static final String CONFIRMED = "CONFIRMED";
+
+    // Хранилище дружбы (можно заменить на таблицу)
     private final List<Friendship> friendships = new ArrayList<>();
 
     @Autowired
@@ -21,90 +26,92 @@ public class FriendshipService {
         this.userStorage = userStorage;
     }
 
-    public void sendFriendRequest(long userId, long friendId) {
+    // Отправка заявки
+    public void sendFriendRequest(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
 
-        if (user.getFriends().contains(friendId)) {
+        // Проверка, есть ли уже дружба или заявка
+        if (areFriends(userId, friendId)) {
             throw new IllegalStateException("Пользователь уже в друзьях");
         }
 
-        Optional<Friendship> existing = findFriendship(userId, friendId);
-        if (existing.isPresent()) {
-            throw new IllegalStateException("Заявка уже отправлена или дружба уже установлена");
+        if (isFriendshipPending(userId, friendId)) {
+            throw new IllegalStateException("Заявка уже отправлена");
         }
 
-        Friendship friendship = new Friendship();
-        friendship.setUserId(user.getId());
-        friendship.setFriendId(friend.getId());
-        friendship.setStatus("PENDING");
-        friendship.setRequestTime(LocalDateTime.now());
-
+        Friendship friendship = new Friendship(userId, friendId, PENDING, LocalDateTime.now());
         friendships.add(friendship);
-
-        user.getPendingRequests().add(friend.getId());
-        friend.getPendingRequests().add(user.getId());
-
-        userStorage.update(user);
-        userStorage.update(friend);
     }
 
-    public void confirmFriendship(long userId, long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
+    // Подтверждение дружбы
+    public void confirmFriendship(Long userId, Long friendId) {
+        Optional<Friendship> f1 = findFriendship(userId, friendId);
+        Optional<Friendship> f2 = findFriendship(friendId, userId);
 
-        if (!user.getPendingRequests().contains(friendId) ||
-                !friend.getPendingRequests().contains(userId)) {
+        if (f1.isEmpty() || f2.isEmpty()) {
             throw new NoSuchElementException("Заявка не найдена");
         }
+        if (!f1.get().getStatus().equals(PENDING) || !f2.get().getStatus().equals(PENDING)) {
+            throw new IllegalStateException("Дружба уже подтверждена");
+        }
 
-        user.getPendingRequests().remove(friendId);
-        friend.getPendingRequests().remove(userId);
-
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
-
-        userStorage.update(user);
-        userStorage.update(friend);
-
-        updateFriendshipStatus(userId, friendId, "CONFIRMED");
-        updateFriendshipStatus(friendId, userId, "CONFIRMED");
+        // Обновляем статус
+        f1.get().setStatus(CONFIRMED);
+        f2.get().setStatus(CONFIRMED);
     }
 
-    public void removeFriend(long userId, long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
+    // Удаление дружбы
+    public void removeFriend(Long userId, Long friendId) {
+        Optional<Friendship> f1 = findFriendship(userId, friendId);
+        Optional<Friendship> f2 = findFriendship(friendId, userId);
 
-        if (!user.getFriends().contains(friendId)) {
+        if (f1.isEmpty() || f2.isEmpty()) {
             throw new IllegalStateException("Дружба не найдена");
         }
 
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
+        friendships.remove(f1.get());
+        friendships.remove(f2.get());
+    }
 
-        userStorage.update(user);
-        userStorage.update(friend);
+    // Получение друзей пользователя
+    public Set<Long> getFriends(Long userId) {
+        Set<Long> friends = new HashSet<>();
+        for (Friendship f : friendships) {
+            if (f.getStatus().equals(CONFIRMED)) {
+                if (f.getUserId().equals(userId)) {
+                    friends.add(f.getFriendId());
+                }
+            }
+        }
+        return friends;
+    }
+
+    // Получение общих друзей
+    public Set<Long> getCommonFriends(Long userId, Long otherId) {
+        Set<Long> friends1 = getFriends(userId);
+        Set<Long> friends2 = getFriends(otherId);
+        friends1.retainAll(friends2);
+        return friends1;
     }
 
     private Optional<Friendship> findFriendship(Long u1, Long u2) {
         return friendships.stream()
-                .filter(f ->
-                        (f.getUserId().equals(u1) && f.getFriendId().equals(u2)) ||
-                                (f.getUserId().equals(u2) && f.getFriendId().equals(u1))
-                )
+                .filter(f -> f.getUserId().equals(u1) && f.getFriendId().equals(u2))
                 .findFirst();
     }
 
-    private User getUserById(long id) {
-        return userStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+    private boolean areFriends(Long u1, Long u2) {
+        return friendships.stream().anyMatch(f ->
+                f.getUserId().equals(u1) && f.getFriendId().equals(u2) && f.getStatus().equals(CONFIRMED));
     }
 
-    private void updateFriendshipStatus(Long u1, Long u2, String status) {
-        for (Friendship f : friendships) {
-            if (f.getUserId().equals(u1) && f.getFriendId().equals(u2)) {
-                f.setStatus(status);
-                break;
-            }
-        }
+    private boolean isFriendshipPending(Long u1, Long u2) {
+        return friendships.stream().anyMatch(f ->
+                f.getUserId().equals(u1) && f.getFriendId().equals(u2) && f.getStatus().equals(PENDING));
+    }
+
+    private User getUserById(Long id) {
+        return userStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
     }
 }

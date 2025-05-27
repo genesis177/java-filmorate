@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Repository
@@ -26,7 +28,7 @@ public class FilmJdbcRepository implements FilmStorage {
         jdbcTemplate.update(sql, film.getName(), film.getDescription(),
                 java.sql.Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getMpaId(),
                 genresToString(film.getGenres()));
-        Integer id = jdbcTemplate.queryForObject("SELECT MAX(id) FROM FILMS", Integer.class);
+        Integer id = jdbcTemplate.queryForObject("SELECT LASTVAL()", Integer.class);
         film.setId(id);
         return film;
     }
@@ -66,28 +68,23 @@ public class FilmJdbcRepository implements FilmStorage {
         return sb.substring(0, sb.length() - 1);
     }
 
-    private final RowMapper<Film> filmRowMapper = new RowMapper<>() {
-        @Override
-        public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Film film = new Film();
-            film.setId(rs.getInt("id"));
-            film.setName(rs.getString("name"));
-            film.setDescription(rs.getString("description"));
-            film.setReleaseDate(rs.getDate("releaseDate").toLocalDate());
-            film.setDuration(rs.getInt("duration"));
-            film.setMpaId(rs.getInt("mpaId"));
-            // загрузка жанров
-            String genresStr = rs.getString("genres");
-            if (genresStr != null && !genresStr.isBlank()) {
-                String[] parts = genresStr.split(",");
-                Set<Integer> genres = new HashSet<>();
-                for (String part : parts) {
-                    genres.add(Integer.parseInt(part.trim()));
-                }
-                film.setGenres(genres);
+    private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {
+        Film film = new Film();
+        film.setId(rs.getInt("id"));
+        film.setName(rs.getString("name"));
+        film.setDescription(rs.getString("description"));
+        film.setReleaseDate(rs.getDate("releaseDate").toLocalDate());
+        film.setDuration(rs.getInt("duration"));
+        film.setMpaId(rs.getInt("mpaId"));
+        String genresStr = rs.getString("genres");
+        if (genresStr != null && !genresStr.isBlank()) {
+            String[] parts = genresStr.split(",");
+            Set<Integer> genres = new HashSet<>();
+            for (String part : parts) {
+                genres.add(Integer.parseInt(part.trim()));
             }
-            return film;
+            film.setGenres(genres);
         }
+        return film;
     };
-
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -126,7 +127,7 @@ public class UserControllerTest {
         mvc.perform(delete("/users/" + id))
                 .andExpect(status().isOk());
 
-        // Проверка что пользователь удален - запрос должен вернуть 404
+        // Проверка, что пользователь удален - запрос должен вернуть 404
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }

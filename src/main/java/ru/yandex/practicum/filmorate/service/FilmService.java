@@ -2,10 +2,10 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.util.ValidationUtil;
+import ru.yandex.practicum.filmorate.model.Film;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,45 +18,8 @@ public class FilmService {
         this.filmStorage = filmStorage;
     }
 
-    public void addLike(Integer filmId, Integer userId) {
-        Film film = getFilmById(filmId);
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
-        if (film.getLikes().contains(userId)) {
-            throw new IllegalStateException("Пользователь уже поставил лайк");
-        }
-        film.getLikes().add(userId);
-        filmStorage.update(film);
-    }
-
-    public void removeLike(Integer filmId, Integer userId) {
-        Film film = getFilmById(filmId);
-        if (film.getLikes() != null && film.getLikes().contains(userId)) {
-            film.getLikes().remove(userId);
-            filmStorage.update(film);
-        } else {
-            throw new NoSuchElementException("Лайк от пользователя не найден");
-        }
-    }
-
-    public List<Film> getPopularFilms(int count) {
-        return filmStorage.getAll().stream()
-                .sorted((f1, f2) -> {
-                    int size1 = f1.getLikes() != null ? f1.getLikes().size() : 0;
-                    int size2 = f2.getLikes() != null ? f2.getLikes().size() : 0;
-                    return Integer.compare(size2, size1);
-                })
-                .limit(count)
-                .collect(Collectors.toList());
-    }
-
-    public Film getFilmById(Integer id) {
-        return filmStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Фильм не найден"));
-    }
-
     public Film addFilm(Film film) {
-        ValidationUtil.validateFilm(film);
+        validateFilm(film);
         if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
         }
@@ -64,16 +27,44 @@ public class FilmService {
     }
 
     public Optional<Film> updateFilm(Film film) {
-        ValidationUtil.validateFilm(film);
+        validateFilm(film);
         if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
         }
         return filmStorage.update(film);
     }
 
-    // добавляем публичный метод
+    public Film getFilmById(Integer id) {
+        return filmStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Фильм не найден"));
+    }
+
     public List<Film> getAllFilms() {
         return filmStorage.getAll();
     }
-}
 
+    public List<Film> getPopularFilms(int count) {
+        return filmStorage.getAll().stream()
+                .sorted((f1, f2) -> {
+                    int likes1 = f1.getLikes() != null ? f1.getLikes().size() : 0;
+                    int likes2 = f2.getLikes() != null ? f2.getLikes().size() : 0;
+                    return Integer.compare(likes2, likes1);
+                })
+                .limit(count)
+                .collect(Collectors.toList());
+    }
+
+    private void validateFilm(Film film) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            throw new IllegalArgumentException("Некорректное название");
+        }
+        if (film.getDescription() == null || film.getDescription().length() > 200) {
+            throw new IllegalArgumentException("Некорректное описание");
+        }
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            throw new IllegalArgumentException("Некорректная дата релиза");
+        }
+        if (film.getDuration() == null || film.getDuration() <= 0) {
+            throw new IllegalArgumentException("Некорректная продолжительность");
+        }
+    }
+}
