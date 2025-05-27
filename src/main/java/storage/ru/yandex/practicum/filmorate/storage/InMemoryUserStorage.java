@@ -39,4 +39,9 @@ public class InMemoryUserStorage implements UserStorage {
     public List<User> getAll() {
         return new ArrayList<>(users.values());
     }
+
+    @Override
+    public void delete(Long id) {
+        users.remove(id);
+    }
 }
