@@ -29,7 +29,8 @@ public class FriendshipControllerTest {
             setLogin(login);
             setName(name);
             setBirthday(java.time.LocalDate.of(1990, 1, 1));
-        }});
+        }
+        });
 
         String responseContent = mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
