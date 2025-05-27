@@ -6,9 +6,8 @@ import java.time.LocalDateTime;
 
 @Data
 public class Friendship {
-    private Integer userID;      // исправлено на camelCase для согласованности с остальным кодом
-    private Integer friendID;
+    private Long userId;
+    private Long friendId;
     private String status; // 'PENDING' или 'CONFIRMED'
     private LocalDateTime requestTime;
-
 }

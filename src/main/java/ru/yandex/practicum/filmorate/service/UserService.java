@@ -80,7 +80,8 @@ public class UserService {
             throw new IllegalStateException("Пользователь уже в друзьях");
         }
         user.getFriends().add(friendId);
-        updateUser(user);
+        userStorage.update(user);
+        // Можно добавить логику для заявок, если есть отдельное хранение
     }
 
     public void confirmFriendship(Long userId, Long friendId) {

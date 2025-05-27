@@ -28,7 +28,7 @@ public class FriendshipController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         try {
-            friendshipService.sendFriendRequest(id.intValue(), friendId.intValue());
+            friendshipService.sendFriendRequest(id, friendId);
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -41,7 +41,7 @@ public class FriendshipController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         try {
-            friendshipService.confirmFriendship(id.intValue(), friendId.intValue());
+            friendshipService.confirmFriendship(id, friendId);
             return ResponseEntity.ok().build();
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -54,7 +54,7 @@ public class FriendshipController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         try {
-            friendshipService.removeFriend(id.intValue(), friendId.intValue());
+            friendshipService.removeFriend(id, friendId);
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -62,6 +62,6 @@ public class FriendshipController {
     }
 
     private boolean userExists(Long userId) {
-        return userService.getUserById(userId).isPresent();
+        return userService.getUserById(userId) != null;
     }
 }
