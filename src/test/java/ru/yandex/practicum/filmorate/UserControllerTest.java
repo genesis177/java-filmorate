@@ -94,7 +94,7 @@ public class UserControllerTest {
         User user = new User();
         user.setId((int) id);
         user.setEmail("update@example.com");
-        user.setLogin("updatelogin");
+        user.setLogin("update login");
         user.setName("Updated Name");
         user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
         mvc.perform(put("/users/" + id)

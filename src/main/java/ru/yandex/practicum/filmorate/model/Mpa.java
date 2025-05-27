@@ -4,6 +4,15 @@ import lombok.Data;
 
 @Data
 public class Mpa {
-    private Integer id;
+    private int id;
     private String name;
+
+    public Mpa() {
+        // конструктор по умолчанию
+    }
+
+    public Mpa(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 }
