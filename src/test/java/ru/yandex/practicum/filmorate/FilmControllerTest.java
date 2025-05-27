@@ -64,7 +64,7 @@ public class FilmControllerTest {
                         .content(mapper.writeValueAsString(film)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.genres").isArray())
-                .andExpect(jsonPath("$.genres").value(org.hamcrest.Matchers.hasItems(1,3,5)));
+                .andExpect(jsonPath("$.genres").value(org.hamcrest.Matchers.hasItems(1, 3, 5)));
     }
 
     // Создание фильма с пустым или отсутствующим именем
@@ -138,7 +138,7 @@ public class FilmControllerTest {
         var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Original");
         film.setDescription("Desc");
-        film.setReleaseDate(LocalDate.of(2000,1,1));
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(100);
         film.setMpaId(1);
         var created = mvc.perform(post("/films")
@@ -163,7 +163,7 @@ public class FilmControllerTest {
         var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Not Exist");
         film.setDescription("Desc");
-        film.setReleaseDate(LocalDate.of(2000,1,1));
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(100);
         film.setMpaId(1);
 
@@ -188,18 +188,14 @@ public class FilmControllerTest {
         var film1 = new ru.yandex.practicum.filmorate.model.Film();
         film1.setName("Popular1");
         film1.setDescription("Desc");
-        film1.setReleaseDate(LocalDate.of(2000,1,1));
+        film1.setReleaseDate(LocalDate.of(2000, 1, 1));
         film1.setDuration(100);
         film1.setMpaId(1);
         var f1 = mapper.readValue(mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film1)))
                 .andReturn().getResponse().getContentAsString(), ru.yandex.practicum.filmorate.model.Film.class);
-        // лайкаем
-        // тут можно дополнительно реализовать лайки, если есть
-        // для примера можно просто считать, что лайки есть
-        // или оставить как есть, и получить топ по лайкам
-        // для теста - достаточно проверить, что список возвращается
+
         mvc.perform(get("/films/popular?count=5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
