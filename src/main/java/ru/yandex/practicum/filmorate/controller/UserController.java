@@ -23,7 +23,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         long id = idGenerator.incrementAndGet();
-        user.setId((int) id);
+        user.setId(id);
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
@@ -45,7 +45,7 @@ public class UserController {
         if (!users.containsKey(id)) {
             return ResponseEntity.notFound().build();
         }
-        user.setId(Math.toIntExact(id));
+        user.setId(id);
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }

@@ -78,4 +78,3 @@ public class UserJdbcRepository implements UserStorage {
 
 }
 
-
