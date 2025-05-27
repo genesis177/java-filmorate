@@ -39,6 +39,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable Integer id) {
         return userService.getFriends(id);
@@ -60,6 +61,8 @@ public class UserController {
         userService.confirmFriendship(id, friendId);
         return ResponseEntity.ok().build();
     }
+
+
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         ValidationUtil.validateUser(user);
@@ -76,3 +79,4 @@ public class UserController {
     }
 
 }
+//Добавлены проблемы недостающие
