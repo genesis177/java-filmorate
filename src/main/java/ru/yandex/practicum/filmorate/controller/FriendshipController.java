@@ -23,6 +23,15 @@ public class FriendshipController {
         this.friendshipService = friendshipService;
     }
 
+    private boolean userExists(Long userId) {
+        try {
+            userService.getUserById(userId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @PostMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         if (!userExists(id) || !userExists(friendId)) {
@@ -78,14 +87,5 @@ public class FriendshipController {
         }
         Set<Long> commonFriends = friendshipService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(commonFriends);
-    }
-
-    private boolean userExists(Long userId) {
-        try {
-            userService.getUserById(userId);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

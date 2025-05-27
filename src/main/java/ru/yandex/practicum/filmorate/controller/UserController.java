@@ -24,6 +24,8 @@ public class UserController {
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         try {
+            user.setName(user.getName() == null ? user.getLogin() : user.getName());
+            // Валидацию можно оставить внутри сервиса или util
             User created = userService.addUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {

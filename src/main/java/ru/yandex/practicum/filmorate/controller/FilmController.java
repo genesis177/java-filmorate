@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -24,9 +25,10 @@ public class FilmController {
     @PostMapping
     public ResponseEntity<Film> createFilm(@RequestBody Film film) {
         try {
+            ValidationUtil.validateFilm(film);
             Film created = filmService.addFilm(film);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
-        } catch (IllegalArgumentException e) {
+        } catch (AssertionError | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
@@ -34,11 +36,12 @@ public class FilmController {
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
         try {
+            ValidationUtil.validateFilm(film);
             film.setId(id);
             return filmService.updateFilm(film)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        } catch (IllegalArgumentException e) {
+        } catch (AssertionError | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
