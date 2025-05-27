@@ -18,6 +18,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class UserControllerTest {
 
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper mapper;
+
     @Test
     public void createUser_ShouldReturnStatus200AndBody() throws Exception {
         User user = new User();
@@ -34,7 +40,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
                 .andExpect(jsonPath("$.name").value("Test Name"))
-                .andExpect(jsonPath("$.login").value("test login"))
+                .andExpect(jsonPath("$.login").value("testlogin"))
                 .andExpect(jsonPath("$.birthday").value("1990-01-01"));
     }
 
@@ -126,10 +132,4 @@ public class UserControllerTest {
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }
-
-    @Autowired
-    private MockMvc mvc;
-
-    @Autowired
-    private ObjectMapper mapper;
 }
