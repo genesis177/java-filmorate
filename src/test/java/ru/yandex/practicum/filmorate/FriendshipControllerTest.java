@@ -7,10 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
-
-import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,10 +22,27 @@ public class FriendshipControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
+    // Вспомогательный метод для создания тестового пользователя
+    private long createTestUser(String email, String login, String name) throws Exception {
+        String userJson = mapper.writeValueAsString(new ru.yandex.practicum.filmorate.model.User() {{
+            setEmail(email);
+            setLogin(login);
+            setName(name);
+            setBirthday(java.time.LocalDate.of(1990, 1, 1));
+        }});
+
+        String responseContent = mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userJson))
+                .andReturn().getResponse().getContentAsString();
+
+        return mapper.readValue(responseContent, ru.yandex.practicum.filmorate.model.User.class).getId();
+    }
+
     @Test
     public void addFriendship_ShouldReturnNotFound_ForNonExistentUser() throws Exception {
-        long nonExistentUserId = 9999L;
         long existingUserId = createTestUser("existing@example.com", "existing", "Existing User");
+        long nonExistentUserId = 9999L;
 
         mvc.perform(post("/users/" + existingUserId + "/friends/" + nonExistentUserId))
                 .andExpect(status().isNotFound());
@@ -56,7 +70,7 @@ public class FriendshipControllerTest {
         mvc.perform(post("/users/" + user1Id + "/friends/" + user2Id + "/confirm"))
                 .andExpect(status().isOk());
 
-        // Попытка снова отправить заявку — ожидаем Conflict (409)
+        // Повторная заявка — ожидаем Conflict (409)
         mvc.perform(post("/users/" + user1Id + "/friends/" + user2Id))
                 .andExpect(status().isConflict());
     }
@@ -66,24 +80,8 @@ public class FriendshipControllerTest {
         long user1Id = createTestUser("userA@example.com", "userA", "User A");
         long user2Id = createTestUser("userB@example.com", "userB", "User B");
 
-        // Попытка удалить дружбу, которой не существует
+        // Попытка удалить несуществующую дружбу
         mvc.perform(delete("/users/" + user1Id + "/friends/" + user2Id))
                 .andExpect(status().isNotFound());
-    }
-
-    private long createTestUser(String email, String login, String name) throws Exception {
-        User user = new User();
-        user.setEmail(email);
-        user.setLogin(login);
-        user.setName(name);
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-
-        String responseContent = mvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andReturn().getResponse().getContentAsString();
-
-        User createdUser = mapper.readValue(responseContent, User.class);
-        return createdUser.getId();
     }
 }

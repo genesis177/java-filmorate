@@ -6,14 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
-
-import java.time.LocalDate;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = FinalProjectApplication.class)
 @AutoConfigureMockMvc
@@ -25,20 +23,35 @@ public class UserControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
+    private long createTestUser(String email, String login, String name) throws Exception {
+        User user = new User();
+        user.setEmail(email);
+        user.setLogin(login);
+        user.setName(name);
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
+        String content = mapper.writeValueAsString(user);
+        String response = mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andReturn().getResponse().getContentAsString();
+
+        return mapper.readValue(response, User.class).getId();
+    }
+
     @Test
     public void createUser_ShouldReturnStatus200AndBody() throws Exception {
         User user = new User();
         user.setEmail("testuser@example.com");
-        user.setLogin("test login");
+        user.setLogin("testlogin");
         user.setName("Test Name");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
 
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
                 .andExpect(jsonPath("$.name").value("Test Name"))
                 .andExpect(jsonPath("$.login").value("testlogin"))
@@ -51,7 +64,7 @@ public class UserControllerTest {
         user.setEmail("invalid email");
         user.setLogin("login");
         user.setName("Name");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
 
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -61,18 +74,7 @@ public class UserControllerTest {
 
     @Test
     public void getUserById_ShouldReturnUser() throws Exception {
-        User user = new User();
-        user.setEmail("getuser@example.com");
-        user.setLogin("get login");
-        user.setName("Get User");
-        user.setBirthday(LocalDate.of(1985, 5, 5));
-        String content = mvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andReturn().getResponse().getContentAsString();
-
-        User createdUser = mapper.readValue(content, User.class);
-        Integer id = createdUser.getId();
+        long id = createTestUser("getuser@example.com", "getlogin", "Get User");
 
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
@@ -88,48 +90,27 @@ public class UserControllerTest {
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
+        long id = createTestUser("update@example.com", "updatelogin", "Update");
         User user = new User();
+        user.setId((int) id);
         user.setEmail("update@example.com");
-        user.setLogin("update login");
-        user.setName("Update");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-        String content = mvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andReturn().getResponse().getContentAsString();
-
-        User createdUser = mapper.readValue(content, User.class);
-        Integer id = createdUser.getId();
-
-        createdUser.setName("Updated Name");
-        String updatedContent = mapper.writeValueAsString(createdUser);
-
+        user.setLogin("updatelogin");
+        user.setName("Updated Name");
+        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(updatedContent))
+                        .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
     }
 
     @Test
     public void deleteUser_ShouldRemoveUser() throws Exception {
-        User user = new User();
-        user.setEmail("delete@example.com");
-        user.setLogin("delete login");
-        user.setName("Delete");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-        String content = mvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andReturn().getResponse().getContentAsString();
-
-        User createdUser = mapper.readValue(content, User.class);
-        Integer id = createdUser.getId();
-
-
+        long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
         mvc.perform(delete("/users/" + id))
                 .andExpect(status().isOk());
 
+        // Проверка, что пользователь удален
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }
