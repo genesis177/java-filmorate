@@ -7,14 +7,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
+import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(classes = FinalProjectApplication.class)
 @AutoConfigureMockMvc
 public class GenreControllerTest {
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @Test
     public void getAllGenres_ShouldReturnList() throws Exception {
@@ -39,11 +45,4 @@ public class GenreControllerTest {
         mvc.perform(get("/genres/9999"))
                 .andExpect(status().isNotFound());
     }
-
-    @Autowired
-    private MockMvc mvc;
-
-    @Autowired
-    private ObjectMapper mapper;
-
 }

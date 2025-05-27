@@ -8,20 +8,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
 
 import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(classes = FinalProjectApplication.class)
 @AutoConfigureMockMvc
 public class FriendshipControllerTest {
 
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @Test
     public void addFriendship_ShouldReturnNotFound_ForNonExistentUser() throws Exception {
-        // Предположим, что userId 9999 не существует
         long nonExistentUserId = 9999L;
         long existingUserId = createTestUser("existing@example.com", "existing", "Existing User");
 
@@ -81,10 +86,4 @@ public class FriendshipControllerTest {
         User createdUser = mapper.readValue(responseContent, User.class);
         return createdUser.getId();
     }
-
-    @Autowired
-    private MockMvc mvc;
-
-    @Autowired
-    private ObjectMapper mapper;
 }
