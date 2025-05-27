@@ -62,6 +62,11 @@ public class FriendshipController {
     }
 
     private boolean userExists(Long userId) {
-        return userService.getUserById(userId) != null;
+        try {
+            userService.getUserById(userId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

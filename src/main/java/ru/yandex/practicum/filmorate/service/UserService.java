@@ -92,4 +92,7 @@ public class UserService {
         userStorage.update(user);
         userStorage.update(friend);
     }
+
+    public void deleteUser(Long id) {
+    }
 }

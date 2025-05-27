@@ -1,71 +1,64 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong();
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        // Простая проверка
-        if (user.getEmail() == null || !user.getEmail().contains("@")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        long id = idGenerator.incrementAndGet();
-        user.setId(id);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        users.put(id, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user); // статус 201
+        User created = userService.addUser(user);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable Long id) {
-        User user = users.get(id);
-        if (user == null) {
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        if (!users.containsKey(id)) {
+        try {
+            user.setId(id);
+            User updated = userService.updateUser(user).orElseThrow();
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        user.setId(id);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        users.put(id, user);
-        return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        User removed = users.remove(id);
-        if (removed == null) {
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.ok().build();
     }
 
-    // Для тестов: очистка базы
-    @PostMapping("/clear")
-    public ResponseEntity<Void> clear() {
-        users.clear();
-        return ResponseEntity.ok().build();
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 }

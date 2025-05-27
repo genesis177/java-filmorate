@@ -27,14 +27,14 @@ public class ValidationUtil {
     }
 
     public static void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+        if (user.getEmail() == null || !user.getEmail().contains("@")) {
             throw new AssertionError("Некорректный email");
         }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+        if (user.getLogin() == null || user.getLogin().isBlank()) {
             throw new AssertionError("Некорректный login");
         }
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            throw new AssertionError("Дата рождения в будущем");
+        if (user.getBirthday() != null && user.getBirthday().isAfter(java.time.LocalDate.now())) {
+            throw new AssertionError("Некорректная дата рождения");
         }
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
