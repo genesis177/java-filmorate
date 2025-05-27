@@ -24,18 +24,17 @@ public class FriendshipControllerTest {
 
     // Вспомогательный метод для создания тестового пользователя
     private long createTestUser(String email, String login, String name) throws Exception {
-        String userJson = mapper.writeValueAsString(new ru.yandex.practicum.filmorate.model.User() {
-            {
-                setEmail(email);
-                setLogin(login);
-                setName(name);
-                setBirthday(java.time.LocalDate.of(1990, 1, 1));
-            }
-        });
+        String userJson = mapper.writeValueAsString(new ru.yandex.practicum.filmorate.model.User() {{
+            setEmail(email);
+            setLogin(login);
+            setName(name);
+            setBirthday(java.time.LocalDate.of(1990, 1, 1));
+        }});
 
         String responseContent = mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userJson))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
         return mapper.readValue(responseContent, ru.yandex.practicum.filmorate.model.User.class).getId();
