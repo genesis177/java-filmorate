@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,18 +21,20 @@ public class MpaControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    //проверка, что при запросе /mpa возвращается список MPAA
+    // Проверка, что при запросе /mpa возвращается список MPAA
     @Test
     public void getAllMpa_ShouldReturnList() throws Exception {
         mvc.perform(get("/mpa"))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
+                // Можно добавить проверки длины и содержимого, если известно
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("G"));
     }
 
-    //проверка получения MPAA по валидным ID (1, 2, 3)
+    // Проверка получения MPAA по валидным ID (1, 2, 3)
     @Test
     public void getMpa_ByValidId_ShouldReturnMpa() throws Exception {
         mvc.perform(get("/mpa/1"))
@@ -51,7 +53,7 @@ public class MpaControllerTest {
                 .andExpect(jsonPath("$.name").value("PG-13"));
     }
 
-    //получение MPAA по несуществующему ID, ожидается 404 Not Found
+    // Получение MPAA по несуществующему ID, ожидается 404 Not Found
     @Test
     public void getMpa_ByInvalidId_ShouldReturn404() throws Exception {
         mvc.perform(get("/mpa/9999"))

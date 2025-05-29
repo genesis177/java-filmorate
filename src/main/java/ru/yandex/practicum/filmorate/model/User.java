@@ -14,7 +14,7 @@ public class User {
     private String login; // Логин пользователя
     private String name; // Имя пользователя, может быть пустым, тогда заполняется логином
 
-    @JsonFormat(pattern = "yyyy-MM-dd") // Формат даты при сериализации/десериализации
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday; // День рождения
 
     private Set<Long> friends = new HashSet<>(); // Множество ID друзей

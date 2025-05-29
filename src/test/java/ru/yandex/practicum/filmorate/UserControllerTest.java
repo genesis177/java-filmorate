@@ -1,21 +1,27 @@
 package ru.yandex.practicum.filmorate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.start.FinalProjectApplication;
 
-@SpringBootTest(classes = FinalProjectApplication.class)
+import java.time.LocalDate;
+
+@SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class UserControllerTest {
 
     @Autowired
@@ -24,46 +30,50 @@ public class UserControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    public void setUp() {
+    }
+
+
     private long createTestUser(String email, String login, String name) throws Exception {
         User user = new User();
         user.setEmail(email);
         user.setLogin(login);
         user.setName(name);
-        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
-        String content = mapper.writeValueAsString(user);
+        user.setBirthday(LocalDate.of(2000, 1, 1));
 
         String response = mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(content))
-                .andExpect(status().isCreated()) // ожидаем 201 Created
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse().getContentAsString();
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        return mapper.readValue(response, User.class).getId();
+        // Предположим, что API возвращает созданного пользователя в JSON
+        User createdUser = mapper.readValue(response, User.class);
+        return createdUser.getId();
     }
 
-    //проверка, что создание пользователя возвращает статус 201 и правильное тело
     @Test
-    public void createUser_ShouldReturnStatus201AndBody() throws Exception {
-        User user = new User();
-        user.setEmail("testuser@example.com");
-        user.setLogin("test login");
-        user.setName("Test Name");
-        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
+    public void createUser_ShouldReturnStatus201AndCorrectBody() throws Exception {
+        String json = "{ \"email\": \"testuser@example.com\", \"login\": \"test_login\", \"name\": \"Test User\", \"birthday\": \"2000-01-01\" }";
 
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
+                        .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
-                .andExpect(jsonPath("$.name").value("Test Name"))
-                .andExpect(jsonPath("$.login").value("test login"))
-                .andExpect(jsonPath("$.birthday").value("1990-01-01"));
+                .andExpect(jsonPath("$.login").value("test_login"))
+                .andExpect(jsonPath("$.name").value("Test User"))
+                .andExpect(jsonPath("$.birthday").value("2000-01-01"));
     }
 
-    //создание пользователя с некорректным email должно возвращать 400 Bad Request
     @Test
     public void createUser_WithInvalidEmail_ShouldReturn400() throws Exception {
         User user = new User();
@@ -78,67 +88,57 @@ public class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    //получение пользователя по существующему ID
     @Test
     public void getUserById_ShouldReturnUser() throws Exception {
         long id = createTestUser("getuser@example.com", "get login", "Get User");
-
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.email").value("getuser@example.com"));
+                .andExpect(jsonPath("$.id").value((int)id))
+                .andExpect(jsonPath("$.email").value("getuser@example.com"))
+                .andExpect(jsonPath("$.login").value("get login"))
+                .andExpect(jsonPath("$.name").value("Get User"))
+                .andExpect(jsonPath("$.birthday").value("2000-01-01"));
     }
 
-    //запрос несуществующего пользователя должен возвращать 404 Not Found
     @Test
     public void getUserById_NotFound_ShouldReturn404() throws Exception {
         mvc.perform(get("/users/9999"))
                 .andExpect(status().isNotFound());
     }
 
-    //обновление пользователя
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
-        long id = createTestUser("update@example.com", "update login", "Update");
+        long id = createTestUser("update@example.com", "update_login", "Update");
 
-        User updatedUser = new User();
-        updatedUser.setId(id);
-        updatedUser.setEmail("update@example.com");
+        String json = "{ \"id\": " + id + ", \"email\": \"update@example.com\", \"login\": \"update_login\", \"name\": \"Updated Name\", \"birthday\": \"1990-12-12\" }";
 
-        // Можно оставить имя пустым или задать новое имя
-        updatedUser.setLogin("update login");
-
-        // Обновляем имя на новое значение
-        updatedUser.setName("Updated Name");
-
+        // Expect status 200 OK (not 201)
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(updatedUser)))
-                .andExpect(status().isOk())
+                        .content(json))
+                .andExpect(status().isOk()) // changed here
                 .andExpect(jsonPath("$.name").value("Updated Name"));
 
-        // Проверка, что обновление прошло успешно
+        // Additional check
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
-
     }
 
-    //удаление пользователя
+
     @Test
     public void deleteUser_ShouldRemoveUser() throws Exception {
         long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
 
         // Удаляем пользователя
         mvc.perform(delete("/users/" + id))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent()); // 204
 
-        // Проверка, что пользователь удален - запрос должен вернуть 404
+        // Проверяем, что пользователь удален
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }
 
-    //тест на проверку даты рождения в будущем
     @Test
     public void createUser_WithFutureBirthday_ShouldReturn400() throws Exception {
         User user = new User();
@@ -153,7 +153,6 @@ public class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    //обновление несуществующего пользователя
     @Test
     public void updateUser_NotFound_ShouldReturn404() throws Exception {
         User user = new User();
@@ -169,7 +168,6 @@ public class UserControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    //тест на ошибки логина(например если он пустой)
     @Test
     public void createUser_WithBlankLogin_ShouldReturn400() throws Exception {
         User user = new User();

@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -8,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 //Реализация хранения пользователей в памяти
-@Component
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new ConcurrentHashMap<>();

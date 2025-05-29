@@ -11,31 +11,57 @@ import java.util.*;
 @Repository
 public class FilmJdbcRepository implements FilmStorage {
 
-    private final JdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public FilmJdbcRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Override
     public Film add(Film film) {
-        String sql = "INSERT INTO FILMS (name, description, releaseDate, duration, mpaId, genres) VALUES (?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, film.getName(), film.getDescription(),
-                java.sql.Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getMpaId(),
-                genresToString(film.getGenres()));
-        Integer id = jdbcTemplate.queryForObject("SELECT LASTVAL()", Integer.class);
+        String sql = "INSERT INTO FILMS (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql,
+                film.getName(),
+                film.getDescription(),
+                java.sql.Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpaId());
+
+        // Получение последнего вставленного id
+        Integer id = jdbcTemplate.queryForObject("VALUES IDENTITY()", Integer.class);
         film.setId(id);
+
+        // Обработка жанров, если есть
+        if (film.getGenres() != null) {
+            for (Integer genreId : film.getGenres()) {
+                jdbcTemplate.update("INSERT INTO FILM_GENRES (film_id, genre_id) VALUES (?, ?)", id, genreId);
+            }
+        }
         return film;
     }
 
     @Override
     public Optional<Film> update(Film film) {
-        String sql = "UPDATE FILMS SET name = ?, description = ?, releaseDate = ?, duration = ?, mpaId = ?, genres = ? WHERE id = ?";
-        int rows = jdbcTemplate.update(sql, film.getName(), film.getDescription(),
-                java.sql.Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getMpaId(),
-                genresToString(film.getGenres()), film.getId());
-        return rows > 0 ? Optional.of(film) : Optional.empty();
+        String sql = "UPDATE FILMS SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
+        int rows = jdbcTemplate.update(sql,
+                film.getName(),
+                film.getDescription(),
+                java.sql.Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpaId(),
+                film.getId());
+        if (rows == 0) {
+            return Optional.empty();
+        }
+
+        // обновляем жанры
+        jdbcTemplate.update("DELETE FROM film_genres WHERE film_id = ?", film.getId());
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            for (Integer genreId : film.getGenres()) {
+                jdbcTemplate.update("INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)", film.getId(), genreId);
+            }
+        }
+        return Optional.of(film);
     }
 
     @Override
@@ -55,31 +81,21 @@ public class FilmJdbcRepository implements FilmStorage {
         return jdbcTemplate.query(sql, filmRowMapper);
     }
 
-    private String genresToString(Set<Integer> genres) {
-        if (genres == null || genres.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder();
-        for (Integer g : genres) {
-            sb.append(g).append(",");
-        }
-        return sb.substring(0, sb.length() - 1);
-    }
-
     private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {
         Film film = new Film();
         film.setId(rs.getInt("id"));
         film.setName(rs.getString("name"));
         film.setDescription(rs.getString("description"));
-        film.setReleaseDate(rs.getDate("releaseDate").toLocalDate());
+        film.setReleaseDate(rs.getDate("release_date").toLocalDate());
         film.setDuration(rs.getInt("duration"));
-        film.setMpaId(rs.getInt("mpaId"));
-        String genresStr = rs.getString("genres");
-        if (genresStr != null && !genresStr.isBlank()) {
-            String[] parts = genresStr.split(",");
-            Set<Integer> genres = new HashSet<>();
-            for (String part : parts) {
-                genres.add(Integer.parseInt(part.trim()));
-            }
-            film.setGenres(genres);
+        film.setMpaId(rs.getInt("mpa_id"));
+        // загружаем жанры
+        List<Integer> genreIds = jdbcTemplate.queryForList(
+                "SELECT genre_id FROM film_genres WHERE film_id = ?", Integer.class, film.getId());
+        if (!genreIds.isEmpty()) {
+            film.setGenres(new HashSet<>(genreIds));
+        } else {
+            film.setGenres(new HashSet<>());
         }
         return film;
     };

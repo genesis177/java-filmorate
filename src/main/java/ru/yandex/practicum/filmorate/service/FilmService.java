@@ -46,4 +46,13 @@ public class FilmService {
                 .limit(count)
                 .collect(Collectors.toList());
     }
+
+    public Film add(Film film) {
+        return filmStorage.add(film);
+
+    }
+
+    public interface GenreService {
+        boolean existsById(Integer genreId);
+    }
 }

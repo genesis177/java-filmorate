@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 //Временное хранилище для тестирования/разработки
-@Component
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films = new ConcurrentHashMap<>();
     private final AtomicInteger idCounter = new AtomicInteger(1);

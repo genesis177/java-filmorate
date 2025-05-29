@@ -17,6 +17,28 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public boolean removeFriend(Long userId, Long friendId) {
+        Optional<User> userOpt = userStorage.getById(userId);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        User user = userOpt.get();
+
+        Optional<User> friendOpt = userStorage.getById(friendId);
+        if (friendOpt.isEmpty()) {
+            return false;
+        }
+
+        User friend = friendOpt.get();
+
+        boolean wasFriend = user.getFriends().remove(friend);
+        if (wasFriend) {
+            userStorage.update(user);
+            return true;
+        }
+        return false;
+    }
+
     // Получение пользователя по id
     public User getUserById(Long id) {
         return userStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
@@ -59,4 +81,6 @@ public class UserService {
             user.setName(user.getLogin());
         }
     }
+
+
 }
