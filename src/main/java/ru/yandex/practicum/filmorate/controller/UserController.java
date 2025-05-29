@@ -46,7 +46,7 @@ public class UserController {
     }
 
     // Обновить пользователя
-    @PutMapping("/{id}")
+    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         try {
             user.setId(id);

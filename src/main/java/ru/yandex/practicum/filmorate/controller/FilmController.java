@@ -53,7 +53,7 @@ public class FilmController {
             film.setId(id);
             Optional<Film> updatedFilm = filmService.updateFilm(film);
             return updatedFilm
-                    .map(value -> ResponseEntity.status(HttpStatus.CREATED).body(value))
+                    .map(value -> ResponseEntity.status(HttpStatus.OK).body(value))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
         } catch (AssertionError | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
