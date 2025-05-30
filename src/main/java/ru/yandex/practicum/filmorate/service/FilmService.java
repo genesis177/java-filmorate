@@ -8,24 +8,30 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final GenreService genreService;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, GenreService genreService) {
         this.filmStorage = filmStorage;
+        this.genreService = genreService;
+    }
+
+    // Проверка существования жанра
+    public boolean existsGenreById(Integer genreId) {
+        return genreService.existsById(genreId);
     }
 
     // Добавление фильма
-    public Film addFilm(Film film) {
+    public Film add(Film film) {
         return filmStorage.add(film);
     }
 
     // Обновление фильма
-    public Optional<Film> updateFilm(Film film) {
+    public Optional<Film> update(Film film) {
         return filmStorage.update(film);
     }
 
@@ -44,12 +50,7 @@ public class FilmService {
         return getAllFilms().stream()
                 .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
                 .limit(count)
-                .collect(Collectors.toList());
-    }
-
-    public Film add(Film film) {
-        return filmStorage.add(film);
-
+                .toList();
     }
 
     public interface GenreService {

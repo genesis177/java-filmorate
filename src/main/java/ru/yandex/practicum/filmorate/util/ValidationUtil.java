@@ -21,19 +21,13 @@ public class ValidationUtil {
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new AssertionError("Длительность не должна быть отрицательной");
         }
-
         if (film.getLikes() == null) {
             film.setLikes(new HashSet<>());
         }
-        if (film.getName() == null || film.getName().trim().isEmpty()) {
-            throw new AssertionError("Не может быть пустым");
-        }
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+        if (film.getGenres() == null || film.getGenres().isEmpty()) {
             throw new AssertionError("Жанры не должны быть пустыми");
         }
-
     }
-
 
     // Проверка корректности пользователя
     public static void validateUser(User user) {
@@ -46,11 +40,8 @@ public class ValidationUtil {
         if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             throw new AssertionError("Некорректная дата рождения");
         }
-        // Если имя отсутствует или пустое, заполняем логином
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-
     }
-
 }

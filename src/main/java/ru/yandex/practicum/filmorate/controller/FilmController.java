@@ -19,14 +19,14 @@ import java.util.Optional;
 @RequestMapping("/films")
 public class FilmController {
 
-
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
     private final FilmService filmService; // бизнес-логика по фильмам
-    private FriendshipService userService;
+    private final FriendshipService userService;
 
     @Autowired
-    public FilmController(FilmService filmService) {
+    public FilmController(FilmService filmService, FriendshipService userService) {
         this.filmService = filmService;
+        this.userService = userService;
     }
 
     // Создать фильм
@@ -34,6 +34,14 @@ public class FilmController {
     public ResponseEntity<Film> createFilm(@RequestBody Film film) {
         try {
             ValidationUtil.validateFilm(film);
+            // Проверка жанров
+            if (film.getGenres() != null) {
+                for (Integer genreId : film.getGenres()) {
+                    if (!filmService.existsGenreById(genreId)) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    }
+                }
+            }
             Film createdFilm = filmService.add(film);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
         } catch (AssertionError | IllegalArgumentException e) {
@@ -49,17 +57,25 @@ public class FilmController {
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
         try {
-            ValidationUtil.validateFilm(film);
+            // Проверка существования фильма
+            filmService.getFilmById(id);
             film.setId(id);
-            Optional<Film> updatedFilm = filmService.updateFilm(film);
-            return updatedFilm
-                    .map(value -> ResponseEntity.status(HttpStatus.OK).body(value))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+            ValidationUtil.validateFilm(film);
+            if (film.getGenres() != null) {
+                for (Integer genreId : film.getGenres()) {
+                    if (!filmService.existsGenreById(genreId)) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    }
+                }
+            }
+            Optional<Film> updated = filmService.update(film);
+            return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (AssertionError | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
-
 
     // Получить фильм по id
     @GetMapping("/{id}")
@@ -79,7 +95,6 @@ public class FilmController {
         return ResponseEntity.ok(films);
     }
 
-
     // Получить популярные фильмы (по лайкам)
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> getPopular(@RequestParam(defaultValue = "10") int count) {
@@ -95,7 +110,5 @@ public class FilmController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
     }
-
 }

@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,6 +22,8 @@ public class ModelValidationTests {
         film.setDescription("Описание");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
+        film.setGenres(Set.of(1)); // добавляем жанры, чтобы избежать ошибки
+
         assertDoesNotThrow(() -> ValidationUtil.validateFilm(film));
     }
 

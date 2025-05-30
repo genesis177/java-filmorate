@@ -13,5 +13,6 @@ public interface FilmStorage {
     Optional<Film> getById(Integer id);
 
     List<Film> getAll();
+
+    Optional<Film> update();
 }
-//В этом классе объявляем стандартные операции для хранения фильмов

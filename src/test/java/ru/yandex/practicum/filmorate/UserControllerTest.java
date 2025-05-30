@@ -52,7 +52,6 @@ public class UserControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        // Предположим, что API возвращает созданного пользователя в JSON
         User createdUser = mapper.readValue(response, User.class);
         return createdUser.getId();
     }
@@ -92,7 +91,7 @@ public class UserControllerTest {
         long id = createTestUser("getuser@example.com", "get login", "Get User");
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value((int)id))
+                .andExpect(jsonPath("$.id").value((int) id))
                 .andExpect(jsonPath("$.email").value("getuser@example.com"))
                 .andExpect(jsonPath("$.login").value("get login"))
                 .andExpect(jsonPath("$.name").value("Get User"))
@@ -111,14 +110,12 @@ public class UserControllerTest {
 
         String json = "{ \"id\": " + id + ", \"email\": \"update@example.com\", \"login\": \"update_login\", \"name\": \"Updated Name\", \"birthday\": \"1990-12-12\" }";
 
-        // Expect status 200 OK (not 201)
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk()) // changed here
                 .andExpect(jsonPath("$.name").value("Updated Name"));
 
-        // Additional check
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
@@ -129,11 +126,9 @@ public class UserControllerTest {
     public void deleteUser_ShouldRemoveUser() throws Exception {
         long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
 
-        // Удаляем пользователя
         mvc.perform(delete("/users/" + id))
                 .andExpect(status().isNoContent()); // 204
 
-        // Проверяем, что пользователь удален
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }
