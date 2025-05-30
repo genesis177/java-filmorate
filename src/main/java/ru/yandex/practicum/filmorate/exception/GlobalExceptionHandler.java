@@ -6,6 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
@@ -13,24 +16,34 @@ import java.util.NoSuchElementException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AssertionError.class)
-    public ResponseEntity<String> handleValidationException(AssertionError ex) {
-        log.warn("Validation error: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    public ResponseEntity<Map<String, String>> handleValidation(AssertionError ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("error", ex.getMessage()));
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<String> handleNotFound(NoSuchElementException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleOther(Exception ex) {
-        log.error("Unexpected error", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
+    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("error", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Void> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    public ResponseEntity<Map<String, String>> handleIllegal(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("error", e.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleOther(Exception ex) {
+        log.error("Unexpected error", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Internal Server Error"));
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

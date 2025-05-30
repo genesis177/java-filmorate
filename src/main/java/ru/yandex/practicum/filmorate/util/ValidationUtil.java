@@ -1,44 +1,56 @@
 package ru.yandex.practicum.filmorate.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 
 public class ValidationUtil {
-    // Проверка корректности фильма
-    public static void validateFilm(Film film) {
+
+    private static final Logger logger = LoggerFactory.getLogger(ValidationUtil.class);
+
+    public static void validateFilm(Film film, FilmService filmService) {
         if (film.getName() == null || film.getName().isBlank()) {
-            throw new AssertionError("Введите название фильма");
+            throw new ValidationException("Название не может быть пустым");
         }
         if (film.getDescription() != null && film.getDescription().length() > 200) {
-            throw new AssertionError("Описание не должно превышать 200 символов");
+            throw new ValidationException("Описание не должно превышать 200 символов");
         }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new AssertionError("Некорректная дата релиза");
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            throw new ValidationException("Дата релиза не может быть раньше 28.12.1895");
         }
         if (film.getDuration() == null || film.getDuration() <= 0) {
-            throw new AssertionError("Длительность не должна быть отрицательной");
+            throw new ValidationException("Длительность должна быть положительным числом");
         }
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
+        if (film.getMpaId() == null || film.getMpaId() <= 0) {
+            throw new ValidationException("Некорректный MPA");
         }
-        if (film.getGenres() == null || film.getGenres().isEmpty()) {
-            throw new AssertionError("Жанры не должны быть пустыми");
+        if (film.getGenres() == null) {
+            throw new ValidationException("Жанры не должны быть null");
         }
+        if (filmService != null) {
+            for (Integer genreId : film.getGenres()) {
+                if (!filmService.existsGenreById(genreId)) {
+                    throw new ValidationException("Жанр с id " + genreId + " не существует");
+                }
+            }
+        }
+        logger.info("Успешно: {}", film);
     }
 
-    // Проверка корректности пользователя
     public static void validateUser(User user) {
         if (user.getEmail() == null || !user.getEmail().contains("@")) {
-            throw new AssertionError("Некорректный email");
+            throw new ValidationException("Некорректный email");
         }
         if (user.getLogin() == null || user.getLogin().isBlank()) {
-            throw new AssertionError("Некорректный login");
+            throw new ValidationException("Некорректный login");
         }
         if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            throw new AssertionError("Некорректная дата рождения");
+            throw new ValidationException("Некорректная дата рождения");
         }
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());

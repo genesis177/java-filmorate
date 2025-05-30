@@ -15,7 +15,9 @@ public class MpaController {
     private static final List<Mpa> MPAS = Arrays.asList(
             new Mpa(1, "G"),
             new Mpa(2, "PG"),
-            new Mpa(3, "PG-13")
+            new Mpa(3, "PG-13"),
+            new Mpa(4, "R"),
+            new Mpa(5, "NC-17")
     );
 
     @GetMapping

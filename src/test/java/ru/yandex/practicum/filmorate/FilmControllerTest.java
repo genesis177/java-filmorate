@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -33,7 +31,7 @@ public class FilmControllerTest {
     private ObjectMapper mapper;
 
     @Autowired
-    private DataSource dataSource;  // для выполнения SQL из теста
+    private DataSource dataSource;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -50,10 +48,9 @@ public class FilmControllerTest {
         }
     }
 
-    // Создание фильма
     @Test
     public void createFilm_ShouldReturn201AndBody() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
+        var film = new Film();
         film.setName("Test Film");
         film.setDescription("Test Description");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -61,18 +58,25 @@ public class FilmControllerTest {
         film.setMpaId(1);
         film.setGenres(Set.of(1, 2));
 
-        MvcResult result = mvc.perform(post("/films")
+        MvcResult createResult = mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated())
                 .andReturn();
-        System.out.println("Status: " + result.getResponse().getStatus());
-        System.out.println("Response: " + result.getResponse().getContentAsString());
+
+// Получаем его id
+        String content = createResult.getResponse().getContentAsString();
+        Film createdFilm = mapper.readValue(content, Film.class);
+        Integer id = createdFilm.getId();
+
+// Запрашиваем по этому id
+        mvc.perform(get("/films/" + id))
+                .andExpect(status().isOk());
     }
 
-    // Создание фильма с несколькими жанрами
     @Test
     public void createFilmSeveralGenres_ShouldReturn201AndBody() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
+        var film = new Film();
         film.setName("Genre Test");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
@@ -80,20 +84,16 @@ public class FilmControllerTest {
         film.setMpaId(2);
         film.setGenres(Set.of(1, 3, 5));
 
-        MvcResult result = mvc.perform(post("/films")
+        mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andReturn();
-
-        System.out.println("Status: " + result.getResponse().getStatus());
-        System.out.println("Response body: " + result.getResponse().getContentAsString());
+                .andExpect(status().isCreated());
     }
 
-    // Создание фильма с пустым или отсутствующим именем
     @Test
     public void createFilmFailName_ShouldReturn400() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
-        film.setName(""); // пустое имя
+        var film = new Film();
+        film.setName(""); // некорректное имя
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
         film.setDuration(90);
@@ -102,15 +102,15 @@ public class FilmControllerTest {
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Название не может быть пустым"));
     }
 
-    // Создание фильма со слишком длинным описанием
     @Test
     public void createFilmFailDescription_ShouldReturn400() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
-        film.setName("Valid Name");
-        film.setDescription("a".repeat(201)); // длиннее 200
+        var film = new Film();
+        film.setName("Valid");
+        film.setDescription("a".repeat(201));
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
         film.setDuration(90);
         film.setMpaId(1);
@@ -118,13 +118,13 @@ public class FilmControllerTest {
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Описание не должно превышать 200 символов"));
     }
 
-    // Создание фильма с датой релиза раньше 28.12.1895
     @Test
     public void createFilmFailReleaseDate_ShouldReturn400() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
+        var film = new Film();
         film.setName("Valid");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(1800, 1, 1));
@@ -134,26 +134,26 @@ public class FilmControllerTest {
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Дата релиза не может быть раньше 28.12.1895"));
     }
 
-    // Создание фильма с нулевой или отрицательной длительностью
     @Test
     public void createFilmFailDuration_ShouldReturn400() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
+        var film = new Film();
         film.setName("Valid");
         film.setDescription("Desc");
-        film.setReleaseDate(LocalDate.of(2000, 5, 5));
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(0);
         film.setMpaId(1);
 
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Длительность должна быть положительным числом"));
     }
 
-    // Обновление существующего фильма
     @Test
     public void updateFilm_ShouldReturn200AndUpdated() throws Exception {
         // создаем фильм
@@ -164,27 +164,28 @@ public class FilmControllerTest {
         film.setDuration(100);
         film.setMpaId(1);
 
-        // выполняем запрос на создание
+        // создаем фильм через POST
         MvcResult result = mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
                 .andReturn();
 
-        int status = result.getResponse().getStatus();
-        String content = result.getResponse().getContentAsString();
+        // получаем id созданного фильма
+        String responseContent = result.getResponse().getContentAsString();
+        Film created = mapper.readValue(responseContent, Film.class);
+        Integer id = created.getId();
 
-        System.out.println("Ответ сервера: " + content);
-        System.out.println("Статус: " + status);
-        if (status != 200) {
-            System.err.println("Ошибка при создании фильма: " + content);
-        }
+        // обновляем
+        created.setName("Updated");
+        mvc.perform(put("/films/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(created)))
+                .andExpect(status().isOk());
     }
 
-    // Обновление несуществующего фильма
     @Test
     public void updateUnknown_ShouldReturn404() throws Exception {
-        // Предполагается, что фильм с id=99999 не существует
-        var film = new ru.yandex.practicum.filmorate.model.Film();
+        var film = new Film();
         film.setName("Not Exist");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -197,50 +198,33 @@ public class FilmControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-
-    // Получение всех фильмов
     @Test
     public void getAllFilms_ShouldReturnList() throws Exception {
-        MvcResult result = mvc.perform(get("/films"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andReturn();
-
-        System.out.println("Ответ сервера: " + result.getResponse().getContentAsString());
-    }
-
-    // Получение популярных фильмов
-    @Test
-    public void getPopular_ShouldReturnList() throws Exception {
-        // создаем фильм
-        var film1 = new Film();
-        film1.setName("Popular1");
-        film1.setDescription("Desc");
-        film1.setReleaseDate(LocalDate.of(2000, 1, 1));
-        film1.setDuration(100);
-        film1.setMpaId(1);
-        film1.setGenres(Set.of(1));
-
-        MvcResult result = mvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(film1)))
-                .andReturn();
-
-        assertEquals(201, result.getResponse().getStatus());
-
-        // далее тест как есть
-        String responseBody = result.getResponse().getContentAsString();
-        Film createdFilm = mapper.readValue(responseBody, Film.class);
-        Integer id = createdFilm.getId();
-
-        mvc.perform(get("/films/popular?count=5"))
+        mvc.perform(get("/films"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // Получение фильма с жанрами, у которого отсутствует продолжительность
     @Test
-    public void createFilmWithInvalidGenre_ShouldReturn201() throws Exception {
+    public void getPopular_ShouldReturnList() throws Exception {
+        // создаем фильм
+        var film = new Film();
+        film.setName("Popular");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film.setDuration(100);
+        film.setMpaId(1);
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated());
+
+        mvc.perform(get("/films/popular?count=5"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void createFilmWithInvalidGenre_ShouldReturn400() throws Exception {
         var film = new Film();
         film.setName("Test Invalid Genre");
         film.setDescription("Some description");
@@ -249,24 +233,22 @@ public class FilmControllerTest {
         film.setMpaId(1);
         film.setGenres(Set.of(9999)); // несуществующий жанр
 
-        String json = mapper.writeValueAsString(film);
-
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest()); // ожидаем 400
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Жанр с id 9999 не существует"));
     }
 
-    // Тест на несуществующий жанр фильмов
     @Test
     public void createFilmFailGenre_ShouldReturn400() throws Exception {
-        var film = new ru.yandex.practicum.filmorate.model.Film();
-        film.setName("Invalid Genre Film");
+        var film = new Film();
+        film.setName("Invalid Genre");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2020, 1, 1));
         film.setDuration(100);
         film.setMpaId(1);
-        film.setGenres(Set.of(9999)); // несуществующий жанр
+        film.setGenres(Set.of(9999));
 
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)

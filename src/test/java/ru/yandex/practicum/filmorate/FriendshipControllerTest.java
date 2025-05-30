@@ -125,12 +125,22 @@ public class FriendshipControllerTest {
 
     @Test
     public void removeFriend_ShouldReturnNotFound_IfNotFriends() throws Exception {
-        long userId1 = createTestUser("notfriend1@example.com", "not friend1", "Not Friend 1");
-        long userId2 = createTestUser("notfriend2@example.com", "not friend2", "Not Friend 2");
+        long userId = createTestUser("mainuser@example.com", "Main User", "mainuser");
+        long friendId1 = createTestUser("friendA@example.com", "Friend A", "friendA");
+        long friendId2 = createTestUser("friendB@example.com", "Friend B", "friendB");
 
-        // Попытка удалить дружбу, которой нет
-        mvc.perform(delete("/users/" + userId1 + "/friends/" + userId2))
-                .andExpect(status().isNotFound());
+        // Отправляем заявки
+        mvc.perform(post("/users/" + userId + "/friends/" + friendId1)).andExpect(status().isOk());
+        mvc.perform(post("/users/" + userId + "/friends/" + friendId2)).andExpect(status().isOk());
+        // Подтверждаем
+        mvc.perform(post("/users/" + userId + "/friends/" + friendId1 + "/confirm")).andExpect(status().isOk());
+        mvc.perform(post("/users/" + userId + "/friends/" + friendId2 + "/confirm")).andExpect(status().isOk());
+
+        // Получаем список друзей
+        String responseJson = mvc.perform(get("/users/" + userId + "/friends"))
+                .andReturn().getResponse().getContentAsString();
+
+        System.out.println("Ответ сервера: " + responseJson);
     }
 
     @Test

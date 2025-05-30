@@ -15,7 +15,7 @@ public class Film {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate releaseDate; // Дата релиза
     private Integer duration; // Продолжительность в минутах
-    private Set<Integer> genres; // Множество жанров (их id)
+    private Set<Integer> genres = new HashSet<>(); // Идентификаторы жанров
     private Integer mpaId; // рейтинг MPAA по id
-    private Set<Long> likes = new HashSet<>(); // Множество ID пользователей, поставивших лайк
+    private Set<Long> likes = new HashSet<>(); // ID пользователей, поставивших лайк
 }

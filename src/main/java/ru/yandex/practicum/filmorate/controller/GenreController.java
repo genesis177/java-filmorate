@@ -32,4 +32,3 @@ public class GenreController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }
-

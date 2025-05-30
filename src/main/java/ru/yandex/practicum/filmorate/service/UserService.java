@@ -82,5 +82,8 @@ public class UserService {
         }
     }
 
+    public boolean existsById(Long id) {
+        return userStorage.getById(id).isPresent();
+    }
 
 }

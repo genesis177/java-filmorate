@@ -83,7 +83,8 @@ public class UserControllerTest {
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
@@ -102,6 +103,7 @@ public class UserControllerTest {
     public void getUserById_NotFound_ShouldReturn404() throws Exception {
         mvc.perform(get("/users/9999"))
                 .andExpect(status().isNotFound());
+
     }
 
     @Test
@@ -173,6 +175,7 @@ public class UserControllerTest {
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

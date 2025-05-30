@@ -89,7 +89,6 @@ public class FilmJdbcRepository implements FilmStorage {
         try {
             String sql = "SELECT * FROM FILMS WHERE id = ?";
             Film film = jdbcTemplate.queryForObject(sql, filmRowMapper, id);
-            // загружаем жанры
             List<Integer> genreIds = jdbcTemplate.queryForList(
                     "SELECT genre_id FROM FILM_GENRES WHERE film_id = ?", Integer.class, id);
             if (genreIds != null) {

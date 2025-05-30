@@ -1,10 +1,11 @@
 package ru.yandex.practicum.filmorate.repository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -12,28 +13,32 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.*;
 
-@Component
+@Repository
 public class UserJdbcRepository implements UserStorage {
-
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public UserJdbcRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM USERS WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
     @Override
     public User add(User user) {
-        // Проверка существования пользователя с таким email (если есть)
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(
                     "INSERT INTO USERS (email, login, name, birthday) VALUES (?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getLogin());
             ps.setString(3, user.getName());
-
             if (user.getBirthday() != null) {
                 ps.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
             } else {
@@ -49,8 +54,13 @@ public class UserJdbcRepository implements UserStorage {
 
     @Override
     public Optional<User> update(User user) {
-        String sql = "UPDATE USERS SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-        int rows = jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), java.sql.Date.valueOf(user.getBirthday()), user.getId());
+        // Проверка существования
+        if (!existsById(user.getId())) {
+            return Optional.empty();
+        }
+        int rows = jdbcTemplate.update(
+                "UPDATE USERS SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?",
+                user.getEmail(), user.getLogin(), user.getName(), java.sql.Date.valueOf(user.getBirthday()), user.getId());
         return rows > 0 ? Optional.of(user) : Optional.empty();
     }
 
@@ -67,13 +77,11 @@ public class UserJdbcRepository implements UserStorage {
 
     @Override
     public List<User> getAll() {
-        String sql = "SELECT * FROM USERS";
-        return jdbcTemplate.query(sql, userRowMapper);
+        return jdbcTemplate.query("SELECT * FROM USERS", userRowMapper);
     }
 
     public void delete(Long id) {
-        String sql = "DELETE FROM USERS WHERE id = ?";
-        jdbcTemplate.update(sql, id);
+        jdbcTemplate.update("DELETE FROM USERS WHERE id = ?", id);
     }
 
     private final RowMapper<User> userRowMapper = (rs, rowNum) -> {
@@ -82,9 +90,7 @@ public class UserJdbcRepository implements UserStorage {
         user.setEmail(rs.getString("email"));
         user.setLogin(rs.getString("login"));
         user.setName(rs.getString("name"));
-        user.setBirthday(rs.getDate("birthday").toLocalDate());
+        user.setBirthday(rs.getDate("birthday") != null ? rs.getDate("birthday").toLocalDate() : null);
         return user;
     };
-
-
 }

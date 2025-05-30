@@ -20,32 +20,26 @@ public class FilmService {
         this.genreService = genreService;
     }
 
-    // Проверка существования жанра
     public boolean existsGenreById(Integer genreId) {
         return genreService.existsById(genreId);
     }
 
-    // Добавление фильма
     public Film add(Film film) {
         return filmStorage.add(film);
     }
 
-    // Обновление фильма
     public Optional<Film> update(Film film) {
         return filmStorage.update(film);
     }
 
-    // Получение фильма по id
     public Film getFilmById(Integer id) {
         return filmStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Фильм не найден"));
     }
 
-    // Получить все фильмы
     public List<Film> getAllFilms() {
         return filmStorage.getAll();
     }
 
-    // Получить список популярных фильмов
     public List<Film> getPopularFilms(int count) {
         return getAllFilms().stream()
                 .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
