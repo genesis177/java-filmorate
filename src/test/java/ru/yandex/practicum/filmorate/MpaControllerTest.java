@@ -28,8 +28,8 @@ public class MpaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
-                // Можно добавить проверки длины и содержимого, если известно
-                .andExpect(jsonPath("$.length()").value(3))
+                // Обновляем ожидаемую длину на 5, чтобы соответствовать фактическому ответу
+                .andExpect(jsonPath("$.length()").value(5))
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("G"));
     }

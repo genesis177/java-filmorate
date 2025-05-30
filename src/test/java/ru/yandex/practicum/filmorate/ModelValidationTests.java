@@ -91,37 +91,37 @@ public class ModelValidationTests {
         user.setEmail("invalid email");
         user.setLogin("login");
         user.setBirthday(LocalDate.of(1990, 1, 1));
-        assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateUser(user));
     }
 
-    //пустой логин
+    // тест на пустой login
     @Test
     public void testEmptyLogin() {
         User user = new User();
         user.setEmail("test@example.com");
         user.setLogin("");
         user.setBirthday(LocalDate.of(1990, 1, 1));
-        assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateUser(user));
     }
 
-    // если логин состоит только из пробелов
+    // тест на login, состоящий только из пробелов
     @Test
     public void testLoginWithSpaces() {
         User user = new User();
         user.setEmail("test@example.com");
         user.setLogin("   ");
         user.setBirthday(LocalDate.of(1990, 1, 1));
-        assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateUser(user));
     }
 
-    //дата рождения в будущем
+    // тест на дату рождения в будущем
     @Test
     public void testFutureBirthday() {
         User user = new User();
         user.setEmail("test@example.com");
         user.setLogin("test login");
         user.setBirthday(LocalDate.now().plusDays(1));
-        assertThrows(AssertionError.class, () -> ValidationUtil.validateUser(user));
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateUser(user));
     }
 
     //тест на правильность даты рождения
