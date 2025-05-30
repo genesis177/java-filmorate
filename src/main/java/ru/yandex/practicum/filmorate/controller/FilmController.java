@@ -68,7 +68,6 @@ public class FilmController {
 
     @DeleteMapping("/{userId}/friends/{friendId}")
     public ResponseEntity<Void> deleteFriend(@PathVariable Integer userId, @PathVariable Integer friendId) {
-        // реализация не важна для тестов, можно оставить
         return ResponseEntity.noContent().build();
     }
 }
