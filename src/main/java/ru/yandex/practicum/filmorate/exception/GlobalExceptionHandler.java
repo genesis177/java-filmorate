@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,11 +11,17 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AssertionError.class)
-    public ResponseEntity<Map<String, String>> handleValidation(AssertionError ex) {
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<Map<String, String>> handleThrowable(Throwable ex) {
+        // Возвращаем 500 для неожиданных ошибок
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Internal Server Error"));
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap("error", ex.getMessage()));
     }
@@ -31,19 +36,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleIllegal(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap("error", e.getMessage()));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleOther(Exception ex) {
-        log.error("Unexpected error", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Collections.singletonMap("error", "Internal Server Error"));
-    }
-
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

@@ -29,42 +29,25 @@ public class UserControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @BeforeEach
-    public void setUp() {
-    }
-
-
     private long createTestUser(String email, String login, String name) throws Exception {
-        User user = new User();
-        user.setEmail(email);
-        user.setLogin(login);
-        user.setName(name);
-        user.setBirthday(LocalDate.of(2000, 1, 1));
-
+        String json = String.format(
+                "{\"email\":\"%s\",\"login\":\"%s\",\"name\":\"%s\",\"birthday\":\"2000-01-01\"}",
+                email, login, name);
         String response = mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
+                        .content(json))
                 .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        User createdUser = mapper.readValue(response, User.class);
-        return createdUser.getId();
+                .andReturn().getResponse().getContentAsString();
+        return mapper.readTree(response).get("id").asLong();
     }
 
     @Test
-    public void createUser_ShouldReturnStatus201AndCorrectBody() throws Exception {
+    public void createUser_ShouldReturn201AndCorrectBody() throws Exception {
         String json = "{ \"email\": \"testuser@example.com\", \"login\": \"test_login\", \"name\": \"Test User\", \"birthday\": \"2000-01-01\" }";
-
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
                 .andExpect(jsonPath("$.login").value("test_login"))
@@ -79,7 +62,6 @@ public class UserControllerTest {
         user.setLogin("login");
         user.setName("Name");
         user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
-
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
@@ -103,34 +85,27 @@ public class UserControllerTest {
     public void getUserById_NotFound_ShouldReturn404() throws Exception {
         mvc.perform(get("/users/9999"))
                 .andExpect(status().isNotFound());
-
     }
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
         long id = createTestUser("update@example.com", "update_login", "Update");
-
         String json = "{ \"id\": " + id + ", \"email\": \"update@example.com\", \"login\": \"update_login\", \"name\": \"Updated Name\", \"birthday\": \"1990-12-12\" }";
-
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isOk()) // changed here
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
-
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
     }
 
-
     @Test
     public void deleteUser_ShouldRemoveUser() throws Exception {
         long id = createTestUser("delete@example.com", "deleteLogin", "Delete");
-
         mvc.perform(delete("/users/" + id))
-                .andExpect(status().isNoContent()); // 204
-
+                .andExpect(status().isNoContent());
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isNotFound());
     }
@@ -141,8 +116,7 @@ public class UserControllerTest {
         user.setEmail("futurebday@example.com");
         user.setLogin("future");
         user.setName("Future Birthday");
-        user.setBirthday(java.time.LocalDate.now().plusDays(1)); // дата в будущем
-
+        user.setBirthday(LocalDate.now().plusDays(1));
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
@@ -156,8 +130,7 @@ public class UserControllerTest {
         user.setEmail("nonexistent@example.com");
         user.setLogin("nonexistent");
         user.setName("Nonexistent");
-        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
-
+        user.setBirthday(LocalDate.of(1990, 1, 1));
         mvc.perform(put("/users/99999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
@@ -168,14 +141,14 @@ public class UserControllerTest {
     public void createUser_WithBlankLogin_ShouldReturn400() throws Exception {
         User user = new User();
         user.setEmail("blanklogin@example.com");
-        user.setLogin(" "); // пробел
+        user.setLogin(" ");
         user.setName("Test");
-        user.setBirthday(java.time.LocalDate.of(1990, 1, 1));
-
+        user.setBirthday(LocalDate.of(1990, 1, 1));
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").exists());
     }
+
 }

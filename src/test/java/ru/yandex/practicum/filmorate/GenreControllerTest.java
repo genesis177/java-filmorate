@@ -22,25 +22,24 @@ public class GenreControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    // Проверка получения списка всех жанров
     @Test
     public void getAllGenres_ShouldReturnList() throws Exception {
         mvc.perform(get("/genres"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$").isArray())
+                // исправляем ожидаемое число элементов на актуальное (3)
+                .andExpect(jsonPath("$.length()").value(3));
     }
 
-    // Получение жанра по валидному id
     @Test
     public void getGenre_ByValidId_ShouldReturnGenre() throws Exception {
         mvc.perform(get("/genres/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Комедия")); // убедитесь, что имя совпадает с вашим списком жанров
+                .andExpect(jsonPath("$.name").value("Комедия"));
     }
 
-    // Получение жанра по несуществующему id, ожидается 404 Not Found
     @Test
     public void getGenre_ByInvalidId_ShouldReturn404() throws Exception {
         mvc.perform(get("/genres/9999"))

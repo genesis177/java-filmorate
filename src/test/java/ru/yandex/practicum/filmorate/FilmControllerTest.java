@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -50,7 +51,7 @@ public class FilmControllerTest {
 
     @Test
     public void createFilm_ShouldReturn201AndBody() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Test Film");
         film.setDescription("Test Description");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -58,25 +59,23 @@ public class FilmControllerTest {
         film.setMpaId(1);
         film.setGenres(Set.of(1, 2));
 
-        MvcResult createResult = mvc.perform(post("/films")
+        String responseStr = mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
                 .andExpect(status().isCreated())
-                .andReturn();
+                .andReturn().getResponse().getContentAsString();
 
-// Получаем его id
-        String content = createResult.getResponse().getContentAsString();
-        Film createdFilm = mapper.readValue(content, Film.class);
-        Integer id = createdFilm.getId();
+        Integer id = mapper.readTree(responseStr).get("id").asInt();
 
-// Запрашиваем по этому id
         mvc.perform(get("/films/" + id))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.name").value("Test Film"));
     }
 
     @Test
-    public void createFilmSeveralGenres_ShouldReturn201AndBody() throws Exception {
-        var film = new Film();
+    public void createFilmSeveralGenres_ShouldReturn201() throws Exception {
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Genre Test");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
@@ -92,7 +91,7 @@ public class FilmControllerTest {
 
     @Test
     public void createFilmFailName_ShouldReturn400() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName(""); // некорректное имя
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
@@ -108,9 +107,9 @@ public class FilmControllerTest {
 
     @Test
     public void createFilmFailDescription_ShouldReturn400() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Valid");
-        film.setDescription("a".repeat(201));
+        film.setDescription("x".repeat(201));
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
         film.setDuration(90);
         film.setMpaId(1);
@@ -124,7 +123,7 @@ public class FilmControllerTest {
 
     @Test
     public void createFilmFailReleaseDate_ShouldReturn400() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Valid");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(1800, 1, 1));
@@ -140,7 +139,7 @@ public class FilmControllerTest {
 
     @Test
     public void createFilmFailDuration_ShouldReturn400() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Valid");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -157,35 +156,40 @@ public class FilmControllerTest {
     @Test
     public void updateFilm_ShouldReturn200AndUpdated() throws Exception {
         // создаем фильм
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Original");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(100);
         film.setMpaId(1);
 
-        // создаем фильм через POST
-        MvcResult result = mvc.perform(post("/films")
+        String resp = mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andReturn();
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
 
-        // получаем id созданного фильма
-        String responseContent = result.getResponse().getContentAsString();
-        Film created = mapper.readValue(responseContent, Film.class);
-        Integer id = created.getId();
+        int id = mapper.readTree(resp).get("id").asInt();
 
         // обновляем
-        created.setName("Updated");
+        var updated = new ru.yandex.practicum.filmorate.model.Film();
+        updated.setId(id);
+        updated.setName("Updated");
+        updated.setDescription("Desc");
+        updated.setReleaseDate(LocalDate.of(2000, 1, 1));
+        updated.setDuration(100);
+        updated.setMpaId(1);
+
         mvc.perform(put("/films/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(created)))
-                .andExpect(status().isOk());
+                        .content(mapper.writeValueAsString(updated)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated"));
     }
 
     @Test
     public void updateUnknown_ShouldReturn404() throws Exception {
-        var film = new Film();
+        var film = new ru.yandex.practicum.filmorate.model.Film();
         film.setName("Not Exist");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -242,8 +246,8 @@ public class FilmControllerTest {
 
     @Test
     public void createFilmFailGenre_ShouldReturn400() throws Exception {
-        var film = new Film();
-        film.setName("Invalid Genre");
+        var film = new ru.yandex.practicum.filmorate.model.Film();
+        film.setName("InvalidGenre");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2020, 1, 1));
         film.setDuration(100);
@@ -253,6 +257,7 @@ public class FilmControllerTest {
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Жанр с id 9999 не существует"));
     }
 }
