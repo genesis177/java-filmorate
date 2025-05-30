@@ -1,7 +1,5 @@
 package ru.yandex.practicum.filmorate.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -10,9 +8,6 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import java.time.LocalDate;
 
 public class ValidationUtil {
-
-    private static final Logger logger = LoggerFactory.getLogger(ValidationUtil.class);
-
     public static void validateFilm(Film film, FilmService filmService) {
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Название не может быть пустым");
@@ -26,20 +21,19 @@ public class ValidationUtil {
         if (film.getDuration() == null || film.getDuration() <= 0) {
             throw new ValidationException("Длительность должна быть положительным числом");
         }
-        if (film.getMpaId() == null || film.getMpaId() <= 0) {
+        if (film.getMpa() == null || film.getMpa().getId() <= 0) {
             throw new ValidationException("Некорректный MPA");
         }
         if (film.getGenres() == null) {
             throw new ValidationException("Жанры не должны быть null");
         }
         if (filmService != null) {
-            for (Integer genreId : film.getGenres()) {
-                if (!filmService.existsGenreById(genreId)) {
-                    throw new ValidationException("Жанр с id " + genreId + " не существует");
+            for (var genre : film.getGenres()) {
+                if (!filmService.existsGenreById(genre.getId())) {
+                    throw new ValidationException("Жанр с id " + genre.getId() + " не существует");
                 }
             }
         }
-        logger.info("Успешно: {}", film);
     }
 
     public static void validateUser(User user) {

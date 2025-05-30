@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
@@ -23,10 +25,11 @@ public class ModelValidationTests {
         film.setDescription("Описание");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
-        film.setGenres(Set.of(1)); // добавляем жанры, чтобы избежать ошибки
-
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null))); // добавляем жанры, чтобы избежать ошибки
+        // не должно выбрасывать исключение
+        assertDoesNotThrow(() -> ValidationUtil.validateFilm(film, null));
     }
-
 
     //проверка на то, что фильм с пустым названием не проходит валидацию
     @Test
@@ -36,6 +39,8 @@ public class ModelValidationTests {
         film.setDescription("Описание");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
         assertThrows(ValidationException.class, () -> ValidationUtil.validateFilm(film, null));
     }
 
@@ -47,10 +52,12 @@ public class ModelValidationTests {
         film.setDescription("x".repeat(201));
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
         assertThrows(ValidationException.class, () -> ValidationUtil.validateFilm(film, null));
     }
 
-    // проверка, что дата релиза раньше 1800 года вызывает ошибку
+    // проверка, что дата релиза раньше 1895 года вызывает ошибку
     @Test
     public void testInvalidReleaseDate() {
         Film film = new Film();
@@ -58,6 +65,8 @@ public class ModelValidationTests {
         film.setDescription("desc");
         film.setReleaseDate(LocalDate.of(1800, 1, 1));
         film.setDuration(120);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
         assertThrows(ValidationException.class, () -> ValidationUtil.validateFilm(film, null));
     }
 
@@ -69,7 +78,9 @@ public class ModelValidationTests {
         film.setDescription("desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(0);
-        assertThrows(ValidationException.class, () -> ValidationUtil.validateFilm(film, null));;
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+        assertThrows(ValidationException.class, () -> ValidationUtil.validateFilm(film, null));
     }
 
     //проверка валидации корректного пользователя

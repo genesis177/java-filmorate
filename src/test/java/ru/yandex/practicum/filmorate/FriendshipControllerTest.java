@@ -41,7 +41,7 @@ public class FriendshipControllerTest {
     public void addFriend_ShouldReturn200() throws Exception {
         long userId1 = createTestUser("f1@example.com", "f1", "Friend1");
         long userId2 = createTestUser("f2@example.com", "f2", "Friend2");
-        mvc.perform(post("/users/" + userId1 + "/friends/" + userId2))
+        mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().isOk());
     }
 
@@ -102,7 +102,7 @@ public class FriendshipControllerTest {
         mvc.perform(post("/users/" + userB + "/friends/" + f2 + "/confirm")).andExpect(status().isOk());
         mvc.perform(post("/users/" + userB + "/friends/" + f3 + "/confirm")).andExpect(status().isOk());
         // общий друг
-        mvc.perform(get("/users/" + userA + "/common-friends/" + userB))
+        mvc.perform(get("/users/" + userA + "/friends/common/" + userB))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,6 +15,7 @@ import java.sql.Statement;
 import java.util.*;
 
 @Repository
+@Primary
 public class UserJdbcRepository implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
 

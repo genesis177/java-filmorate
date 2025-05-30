@@ -28,8 +28,7 @@ public class GenreControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
-                // исправляем ожидаемое число элементов на актуальное (3)
-                .andExpect(jsonPath("$.length()").value(3));
+                .andExpect(jsonPath("$.length()").value(6));
     }
 
     @Test

@@ -5,7 +5,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.List;
 import java.util.Optional;
 
-//Общий интерфейс хранения пользователей
 public interface UserStorage {
     User add(User user);
 

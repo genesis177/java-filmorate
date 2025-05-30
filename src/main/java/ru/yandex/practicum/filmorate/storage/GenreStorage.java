@@ -1,5 +1,19 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import ru.yandex.practicum.filmorate.model.Genre;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 public interface GenreStorage {
-    boolean existsById(Integer genreId);
+    List<Genre> getAll();
+
+    Optional<Genre> getById(int id);
+
+    boolean existsById(Integer id);
+
+    Optional<Genre> getById(Integer id);
+
+    Set<Genre> resolveGenres(Set<Genre> genres);
 }

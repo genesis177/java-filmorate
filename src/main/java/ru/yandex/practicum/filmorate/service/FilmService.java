@@ -1,39 +1,44 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final GenreService genreService;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, GenreService genreService) {
+    public FilmService(
+            @Qualifier("filmJdbcRepository") FilmStorage filmStorage,
+            GenreStorage genreStorage,
+            MpaStorage mpaStorage) {
         this.filmStorage = filmStorage;
-        this.genreService = genreService;
-    }
-
-    public boolean existsGenreById(Integer genreId) {
-        return genreService.existsById(genreId);
+        this.genreStorage = genreStorage;
+        this.mpaStorage = mpaStorage;
     }
 
     public Film add(Film film) {
+        film.setGenres(genreStorage.resolveGenres(film.getGenres()));
+        film.setMpa(mpaStorage.getById(film.getMpa().getId()).orElseThrow());
         return filmStorage.add(film);
     }
 
     public Optional<Film> update(Film film) {
+        film.setGenres(genreStorage.resolveGenres(film.getGenres()));
+        film.setMpa(mpaStorage.getById(film.getMpa().getId()).orElseThrow());
         return filmStorage.update(film);
     }
 
-    public Film getFilmById(Integer id) {
-        return filmStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Фильм не найден"));
+    public Optional<Film> getById(Integer id) {
+        return filmStorage.getById(id);
     }
 
     public List<Film> getAllFilms() {
@@ -41,13 +46,21 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(int count) {
-        return getAllFilms().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
+        return filmStorage.getAll().stream()
+                .sorted((a, b) -> Integer.compare(b.getLikes().size(), a.getLikes().size()))
                 .limit(count)
-                .toList();
+                .collect(Collectors.toList());
     }
 
-    public interface GenreService {
-        boolean existsById(Integer genreId);
+    public void addLike(Integer filmId, Long userId) {
+        filmStorage.addLike(filmId, userId);
+    }
+
+    public void removeLike(Integer filmId, Long userId) {
+        filmStorage.removeLike(filmId, userId);
+    }
+
+    public boolean existsGenreById(Integer genreId) {
+        return genreStorage.existsById(genreId);
     }
 }

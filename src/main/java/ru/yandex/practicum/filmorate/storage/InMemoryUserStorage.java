@@ -1,20 +1,19 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-//Реализация хранения пользователей в памяти
+@Component
 public class InMemoryUserStorage implements UserStorage {
-
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-    private final AtomicLong idCounter = new AtomicLong(1);
+    private final Map<Long, User> users = new HashMap<>();
+    private final AtomicLong idGen = new AtomicLong(1);
 
     @Override
     public User add(User user) {
-        long id = idCounter.getAndIncrement();
+        long id = idGen.getAndIncrement();
         user.setId(id);
         users.put(id, user);
         return user;
@@ -22,9 +21,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Optional<User> update(User user) {
-        if (user.getId() == null || !users.containsKey(user.getId())) {
-            return Optional.empty();
-        }
+        if (!users.containsKey(user.getId())) return Optional.empty();
         users.put(user.getId(), user);
         return Optional.of(user);
     }

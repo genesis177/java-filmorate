@@ -1,34 +1,28 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.service.GenreService;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
 @RequestMapping("/genres")
+@RequiredArgsConstructor
 public class GenreController {
-
-    private static final List<Genre> GENRES = Arrays.asList(
-            new Genre(1, "Комедия"),
-            new Genre(2, "Драма"),
-            new Genre(3, "Мультфильм")
-    );
+    private final GenreService genreService;
 
     @GetMapping
     public List<Genre> getAllGenres() {
-        return GENRES;
+        return genreService.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Genre> getGenre(@PathVariable int id) {
-        return GENRES.stream()
-                .filter(g -> g.getId() == id)
-                .findFirst()
+        return genreService.getById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseGet(() -> ResponseEntity.status(404).build());
     }
 }

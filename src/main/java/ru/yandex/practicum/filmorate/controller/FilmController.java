@@ -1,73 +1,63 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.FriendshipService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
-import java.util.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
-
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
     private final FilmService filmService;
 
-    @Autowired
-    public FilmController(FilmService filmService, FriendshipService userService) {
-        this.filmService = filmService;
-    }
-
-    // Создать фильм
     @PostMapping
     public ResponseEntity<Film> createFilm(@RequestBody Film film) {
-        ValidationUtil.validateFilm(film, null); // Передаем null, если проверка не требуется
+        ValidationUtil.validateFilm(film, filmService);
         Film created = filmService.add(film);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Film> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
-        try {
-            film.setId(id);
-            Optional<Film> updatedOpt = filmService.update(film);
-            return updatedOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        } catch (AssertionError | IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        ValidationUtil.validateFilm(film, filmService);
+        film.setId(id);
+        return filmService.update(film)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Film> getFilm(@PathVariable Integer id) {
-        try {
-            Film film = filmService.getFilmById(id);
-            return ResponseEntity.ok(film);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        return filmService.getById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @GetMapping
-    public ResponseEntity<List<Film>> getAllFilms() {
-        List<Film> films = filmService.getAllFilms();
-        return ResponseEntity.ok(films);
+    public List<Film> getAllFilms() {
+        return filmService.getAllFilms();
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<List<Film>> getPopular(@RequestParam(defaultValue = "10") int count) {
-        List<Film> popularFilms = filmService.getPopularFilms(count);
-        return ResponseEntity.ok(popularFilms);
+    public List<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getPopularFilms(count);
     }
 
-    @DeleteMapping("/{userId}/friends/{friendId}")
-    public ResponseEntity<Void> deleteFriend(@PathVariable Integer userId, @PathVariable Integer friendId) {
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{filmId}/like/{userId}")
+    public ResponseEntity<Void> addLike(@PathVariable Integer filmId, @PathVariable Long userId) {
+        filmService.addLike(filmId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{filmId}/like/{userId}")
+    public ResponseEntity<Void> removeLike(@PathVariable Integer filmId, @PathVariable Long userId) {
+        filmService.removeLike(filmId, userId);
+        return ResponseEntity.ok().build();
     }
 }

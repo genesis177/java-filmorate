@@ -1,19 +1,19 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-//Временное хранилище для тестирования/разработки
+@Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private final Map<Integer, Film> films = new ConcurrentHashMap<>();
-    private final AtomicInteger idCounter = new AtomicInteger(1);
+    private final Map<Integer, Film> films = new HashMap<>();
+    private final AtomicInteger idGen = new AtomicInteger(1);
 
     @Override
     public Film add(Film film) {
-        int id = idCounter.getAndIncrement();
+        int id = idGen.getAndIncrement();
         film.setId(id);
         films.put(id, film);
         return film;
@@ -21,9 +21,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Optional<Film> update(Film film) {
-        if (film.getId() == null || !films.containsKey(film.getId())) {
-            return Optional.empty();
-        }
+        if (!films.containsKey(film.getId())) return Optional.empty();
         films.put(film.getId(), film);
         return Optional.of(film);
     }
@@ -39,7 +37,14 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Optional<Film> update() {
-        return Optional.empty();
+    public void addLike(Integer filmId, Long userId) {
+        Film film = films.get(filmId);
+        if (film != null) film.getLikes().add(userId);
+    }
+
+    @Override
+    public void removeLike(Integer filmId, Long userId) {
+        Film film = films.get(filmId);
+        if (film != null) film.getLikes().remove(userId);
     }
 }

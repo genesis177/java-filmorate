@@ -9,14 +9,11 @@ import java.util.Set;
 
 @Data
 public class User {
-    private Long id; // Идентификатор пользователя
+    private Long id;
     private String email;
-    private String login; // Логин пользователя
-    private String name; // Имя пользователя, может быть пустым, тогда заполняется логином
-
+    private String login;
+    private String name;
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate birthday; // День рождения
-
-    private Set<Long> friends = new HashSet<>(); // Множество ID друзей
-    private Set<Long> pendingRequests = new HashSet<>(); // Множество входящих заявок
+    private LocalDate birthday;
+    private Set<Long> friends = new HashSet<>();
 }

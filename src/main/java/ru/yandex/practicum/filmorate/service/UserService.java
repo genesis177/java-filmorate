@@ -1,89 +1,69 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage; // Хранилище пользователей
+    private final UserStorage userStorage;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
-
-    public boolean removeFriend(Long userId, Long friendId) {
-        Optional<User> userOpt = userStorage.getById(userId);
-        if (userOpt.isEmpty()) {
-            return false;
-        }
-        User user = userOpt.get();
-
-        Optional<User> friendOpt = userStorage.getById(friendId);
-        if (friendOpt.isEmpty()) {
-            return false;
-        }
-
-        User friend = friendOpt.get();
-
-        boolean wasFriend = user.getFriends().remove(friend);
-        if (wasFriend) {
-            userStorage.update(user);
-            return true;
-        }
-        return false;
-    }
-
-    // Получение пользователя по id
-    public User getUserById(Long id) {
-        return userStorage.getById(id).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-    }
-
-    // Создание пользователя
     public User addUser(User user) {
-        validateUser(user);
         return userStorage.add(user);
     }
 
-    // Обновление пользователя
     public Optional<User> updateUser(User user) {
-        validateUser(user);
         return userStorage.update(user);
     }
 
-    // Получение всех пользователей
+    public Optional<User> getById(Long id) {
+        return userStorage.getById(id);
+    }
+
     public List<User> getAllUsers() {
         return userStorage.getAll();
     }
 
-    // Удаление пользователя
     public void deleteUser(Long id) {
         userStorage.delete(id);
     }
 
-    // Валидация данных
-    private void validateUser(User user) {
-        if (user.getEmail() == null || !user.getEmail().contains("@")) {
-            throw new IllegalArgumentException("Некорректный email");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank()) {
-            throw new IllegalArgumentException("Логин не может быть пустым");
-        }
-        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Некорректная дата рождения");
-        }
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+    public void addFriend(Long userId, Long friendId) {
+        User user = userStorage.getById(userId).orElseThrow();
+        User friend = userStorage.getById(friendId).orElseThrow();
+        user.getFriends().add(friendId);
+        userStorage.update(user);
     }
 
-    public boolean existsById(Long id) {
-        return userStorage.getById(id).isPresent();
+    public void removeFriend(Long userId, Long friendId) {
+        User user = userStorage.getById(userId).orElseThrow();
+        user.getFriends().remove(friendId);
+        userStorage.update(user);
     }
 
+    public List<User> getFriends(Long userId) {
+        User user = userStorage.getById(userId).orElseThrow();
+        return user.getFriends().stream()
+                .map(fid -> userStorage.getById(fid).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public List<User> getCommonFriends(Long userId, Long otherId) {
+        Set<Long> friends1 = new HashSet<>(userStorage.getById(userId).orElseThrow().getFriends());
+        Set<Long> friends2 = new HashSet<>(userStorage.getById(otherId).orElseThrow().getFriends());
+        friends1.retainAll(friends2);
+        return friends1.stream()
+                .map(fid -> userStorage.getById(fid).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public void confirmFriendship(Long id, Long friendId) {
+    }
 }

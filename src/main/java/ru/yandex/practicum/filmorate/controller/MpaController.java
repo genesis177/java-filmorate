@@ -1,36 +1,28 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
 @RequestMapping("/mpa")
+@RequiredArgsConstructor
 public class MpaController {
-
-    private static final List<Mpa> MPAS = Arrays.asList(
-            new Mpa(1, "G"),
-            new Mpa(2, "PG"),
-            new Mpa(3, "PG-13"),
-            new Mpa(4, "R"),
-            new Mpa(5, "NC-17")
-    );
+    private final MpaService mpaService;
 
     @GetMapping
     public List<Mpa> getAllMpa() {
-        return MPAS;
+        return mpaService.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Mpa> getMpa(@PathVariable int id) {
-        return MPAS.stream()
-                .filter(m -> m.getId() == id)
-                .findFirst()
+        return mpaService.getById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseGet(() -> ResponseEntity.status(404).build());
     }
 }

@@ -1,15 +1,52 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.Set;
+import java.util.*;
 
-@Repository
+@Component
 public class InMemoryGenreStorage implements GenreStorage {
-    private final Set<Integer> genreIds = Set.of(1, 2, 3, 4, 5);
+    private static final List<Genre> GENRES = List.of(
+            new Genre(1, "Комедия"),
+            new Genre(2, "Драма"),
+            new Genre(3, "Мультфильм"),
+            new Genre(4, "Триллер"),
+            new Genre(5, "Документальный"),
+            new Genre(6, "Боевик")
+    );
+
+    @Override
+    public List<Genre> getAll() {
+        return new ArrayList<>(GENRES);
+    }
+
+    @Override
+    public Optional<Genre> getById(int id) {
+        return GENRES.stream().filter(g -> g.getId() == id).findFirst();
+    }
 
     @Override
     public boolean existsById(Integer genreId) {
-        return genreIds.contains(genreId);
+        return GENRES.stream().anyMatch(g -> g.getId() == genreId);
+    }
+
+    @Override
+    public Optional<Genre> getById(Integer id) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Set<Genre> resolveGenres(Set<Genre> input) {
+        if (input == null) return new LinkedHashSet<>();
+        Set<Integer> ids = new LinkedHashSet<>();
+        for (Genre g : input) {
+            ids.add(g.getId());
+        }
+        Set<Genre> result = new LinkedHashSet<>();
+        for (Integer id : ids) {
+            getById(id).ifPresent(result::add);
+        }
+        return result;
     }
 }

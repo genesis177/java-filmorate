@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Repository
+@Primary
 public class FriendshipJdbcRepository {
     private final JdbcTemplate jdbcTemplate;
 
