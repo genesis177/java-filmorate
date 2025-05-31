@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 public class UserDto {
@@ -12,5 +11,5 @@ public class UserDto {
     private String login;
     private String name;
     private LocalDate birthday;
-    private List<UserDto> friends;
+    private Integer friends;  // количество друзей
 }

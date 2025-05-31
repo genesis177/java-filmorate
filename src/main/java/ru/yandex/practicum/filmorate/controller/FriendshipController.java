@@ -24,8 +24,7 @@ public class FriendshipController {
     public ResponseEntity<User> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Добавление друга: userId={}, friendId={}", id, friendId);
         friendshipService.sendFriendRequest(id, friendId);
-        // Возвращаем пользователя с обновленным списком друзей
-        User user = userService.getUserWithoutFriends(id);
+        User user = userService.getUserWithFriends(id);  // <-- здесь
         log.info("Пользователь с друзьями: {}", user);
         return ResponseEntity.ok(user);
     }
@@ -75,5 +74,6 @@ public class FriendshipController {
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(commonFriends);
     }
+
 
 }

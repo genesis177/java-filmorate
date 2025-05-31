@@ -19,18 +19,17 @@ public class UserService {
         return userStorage.add(user);
     }
 
-    public User updateUser(User user) {
-        return userStorage.update(user)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + user.getId() + " not found"));
+    public Optional<User> updateUser(User user) {
+        return userStorage.update(user);
     }
 
     public Optional<User> getById(Long id) {
         Optional<User> userOpt = userStorage.getById(id);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            List<User> friends = getFriends(id);
             Set<Long> friendIds = friendshipService.getFriends(id);
             user.setFriends(friendIds);
+            return Optional.of(user);  // вернуть пользователя с обновленными друзьями
         }
         return Optional.empty();
     }
@@ -59,6 +58,14 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public User getUserWithFriends(Long userId) {
+        User user = userStorage.getById(userId)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        Set<Long> friendIds = friendshipService.getFriends(userId);
+        user.setFriends(friendIds);
+        return user;
+    }
+
     public UserDto getUserWithFriendsDto(Long userId, int depth) {
         User user = userStorage.getById(userId)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
@@ -84,18 +91,12 @@ public class UserService {
         dto.setName(user.getName());
         dto.setBirthday(user.getBirthday());
 
-        if (depth > 0 && user.getFriends() != null) {
-            List<UserDto> friendDtos = user.getFriends().stream()
-                    .map(friendId -> {
-                        User friend = userStorage.getById(friendId)
-                                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-                        return toUserDto(friend, depth - 1);
-                    })
-                    .collect(Collectors.toList());
-            dto.setFriends(friendDtos);
+        if (user.getFriends() != null) {
+            dto.setFriends(user.getFriends().size());
         } else {
-            dto.setFriends(Collections.emptyList());
+            dto.setFriends(0);
         }
+
         return dto;
     }
 }

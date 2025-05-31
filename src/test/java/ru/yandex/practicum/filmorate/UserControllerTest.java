@@ -100,13 +100,23 @@ public class UserControllerTest {
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
         long id = createTestUser("update@example.com", "update_login", "Update");
-        String json = "{ \"id\": " + id + ", \"email\": \"update@example.com\", \"login\": \"update_login\", \"name\": \"Updated Name\", \"birthday\": \"1990-12-12\" }";
+
+        User updatedUser = new User();
+        updatedUser.setId(id);
+        updatedUser.setEmail("update@example.com");
+        updatedUser.setLogin("update_login");
+        updatedUser.setName("Updated Name");
+        updatedUser.setBirthday(LocalDate.of(1990, 12, 12));
+
+        String json = mapper.writeValueAsString(updatedUser);
+
         mvc.perform(put("/users/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));
+
         mvc.perform(get("/users/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Name"));

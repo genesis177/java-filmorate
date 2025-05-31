@@ -5,10 +5,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -27,16 +30,20 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         ValidationUtil.validateUser(user);
         user.setId(id);
-        User updatedUser = userService.updateUser(user);
-        return ResponseEntity.ok(updatedUser);
+        Optional<User> updatedUser = userService.updateUser(user);
+        return updatedUser
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
 
     @PutMapping
     public ResponseEntity<User> updateUserWithoutId(@RequestBody User user) {
         ValidationUtil.validateUser(user);
-        User updatedUser = userService.updateUser(user);
-        return ResponseEntity.ok(updatedUser);
+        Optional<User> updatedUserOpt = userService.updateUser(user);
+        return updatedUserOpt
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @GetMapping("/{id}")
@@ -55,5 +62,15 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/dto")
+    public ResponseEntity<UserDto> getUserDto(@PathVariable Long id) {
+        try {
+            UserDto userDto = userService.getUserWithFriendsDto(id, 1);
+            return ResponseEntity.ok(userDto);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

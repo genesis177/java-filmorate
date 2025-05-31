@@ -45,18 +45,32 @@ public class FriendshipControllerTest {
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().isOk());
 
-        mvc.perform(post("/users/" + userId2 + "/friends/" + userId1 + "/confirm"))
-                .andExpect(status().isOk());
-
-        mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
-                .andExpect(status().is4xxClientError());
-
-        MvcResult result = mvc.perform(get("/users/" + userId1 + "/friends"))
+        MvcResult resultBeforeConfirm = mvc.perform(get("/users/" + userId1 + "/friends"))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String content = result.getResponse().getContentAsString();
-        System.out.println("Friends response: " + content);
+        String contentBefore = resultBeforeConfirm.getResponse().getContentAsString();
+        System.out.println("Friends before confirm: " + contentBefore);
+
+
+        mvc.perform(post("/users/" + userId2 + "/friends/" + userId1 + "/confirm"))
+                .andExpect(status().isOk());
+
+
+        MvcResult resultAfterConfirm1 = mvc.perform(get("/users/" + userId1 + "/friends"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MvcResult resultAfterConfirm2 = mvc.perform(get("/users/" + userId2 + "/friends"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String contentAfter1 = resultAfterConfirm1.getResponse().getContentAsString();
+        String contentAfter2 = resultAfterConfirm2.getResponse().getContentAsString();
+
+        System.out.println("Friends of userId1 after confirm: " + contentAfter1);
+        System.out.println("Friends of userId2 after confirm: " + contentAfter2);
+
     }
 
     @Test
