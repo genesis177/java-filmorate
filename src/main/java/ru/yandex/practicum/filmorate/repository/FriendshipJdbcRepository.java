@@ -104,4 +104,5 @@ public class FriendshipJdbcRepository {
                 ")";
         return jdbcTemplate.queryForList(sql, Long.class, userId1, userId1, userId1, userId2, userId2, userId2);
     }
+
 }

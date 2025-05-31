@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.GenreNotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.GenreService;
@@ -22,10 +24,18 @@ public class FilmController {
     private final GenreService genreService;  // Добавляем GenreService
 
     @PostMapping
-    public ResponseEntity<Film> createFilm(@RequestBody Film film) {
-        ValidationUtil.validateFilm(film, genreService);
-        Film created = filmService.add(film);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<?> createFilm(@RequestBody Film film) {
+        try {
+            ValidationUtil.validateFilm(film, genreService);
+            Film created = filmService.add(film);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (GenreNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        }
     }
 
     @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

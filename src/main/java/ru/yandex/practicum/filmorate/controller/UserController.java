@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -38,12 +40,21 @@ public class UserController {
 
 
     @PutMapping
-    public ResponseEntity<User> updateUserWithoutId(@RequestBody User user) {
-        ValidationUtil.validateUser(user);
-        Optional<User> updatedUserOpt = userService.updateUser(user);
-        return updatedUserOpt
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    public ResponseEntity<?> updateUserWithoutId(@RequestBody User user) {
+        try {
+            ValidationUtil.validateUser(user);
+            if (user.getId() == null) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "User ID is required"));
+            }
+            User updatedUser = userService.update(user);
+            return ResponseEntity.ok(updatedUser);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        }
     }
 
 
@@ -74,5 +85,6 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+
 
 }

@@ -56,8 +56,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(GenreNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleGenreNotFound(GenreNotFoundException ex) {
-        Map<String, String> error = Map.of("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("error", ex.getMessage()));
     }
 
 

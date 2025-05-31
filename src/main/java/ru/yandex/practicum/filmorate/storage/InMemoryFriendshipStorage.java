@@ -14,8 +14,6 @@ public class InMemoryFriendshipStorage {
     private final Map<Long, Map<Long, Friendship>> friendships = new ConcurrentHashMap<>();
 
     public boolean userExists(Long userId) {
-        // В данном контексте, предполагается, что пользователь существует, проверка вне
-        // Можно оставить как есть или реализовать внешнюю проверку
         return true;
     }
 
