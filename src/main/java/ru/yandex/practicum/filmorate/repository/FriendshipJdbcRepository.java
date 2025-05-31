@@ -40,12 +40,13 @@ public class FriendshipJdbcRepository {
     public void confirmFriend(Long userId, Long friendId) {
         if (!userExists(userId) || !userExists(friendId))
             throw new IllegalArgumentException("Пользователь не найден");
+        // Проверяем заявку от friendId к userId
         String checkSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ? AND status='PENDING'";
-        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, friendId);
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, friendId, userId);
         if (count == null || count == 0)
             throw new IllegalStateException("Заявки нет");
         String sql = "UPDATE FRIENDS SET status='CONFIRMED' WHERE (user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)";
-        jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+        jdbcTemplate.update(sql, friendId, userId, userId, friendId);
     }
 
     public void removeFriend(Long userId, Long friendId) {

@@ -56,13 +56,14 @@ public class UserJdbcRepository implements UserStorage {
 
     @Override
     public Optional<User> update(User user) {
-        // Проверка существования
         if (!existsById(user.getId())) {
             return Optional.empty();
         }
         int rows = jdbcTemplate.update(
                 "UPDATE USERS SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?",
-                user.getEmail(), user.getLogin(), user.getName(), java.sql.Date.valueOf(user.getBirthday()), user.getId());
+                user.getEmail(), user.getLogin(), user.getName(),
+                user.getBirthday() != null ? java.sql.Date.valueOf(user.getBirthday()) : null,
+                user.getId());
         return rows > 0 ? Optional.of(user) : Optional.empty();
     }
 
@@ -93,6 +94,7 @@ public class UserJdbcRepository implements UserStorage {
         user.setLogin(rs.getString("login"));
         user.setName(rs.getString("name"));
         user.setBirthday(rs.getDate("birthday") != null ? rs.getDate("birthday").toLocalDate() : null);
+        user.setFriends(new HashSet<>()); // инициализация пустым множеством
         return user;
     };
 }

@@ -57,12 +57,12 @@ public class FriendshipControllerTest {
         long userId = createTestUser("main@example.com", "main", "Main");
         long friend1 = createTestUser("f1@example.com", "f1", "F1");
         long friend2 = createTestUser("f2@example.com", "f2", "F2");
-        // заявки
+        // userId отправляет заявки friend1 и friend2
         mvc.perform(post("/users/" + userId + "/friends/" + friend1)).andExpect(status().isOk());
         mvc.perform(post("/users/" + userId + "/friends/" + friend2)).andExpect(status().isOk());
-        // подтверждение
-        mvc.perform(post("/users/" + userId + "/friends/" + friend1 + "/confirm")).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userId + "/friends/" + friend2 + "/confirm")).andExpect(status().isOk());
+        // friend1 и friend2 подтверждают заявки userId
+        mvc.perform(post("/users/" + friend1 + "/friends/" + userId + "/confirm")).andExpect(status().isOk());
+        mvc.perform(post("/users/" + friend2 + "/friends/" + userId + "/confirm")).andExpect(status().isOk());
         // список друзей
         mvc.perform(get("/users/" + userId + "/friends"))
                 .andExpect(status().isOk())
@@ -73,13 +73,18 @@ public class FriendshipControllerTest {
     public void removeFriend_ShouldWork() throws Exception {
         long userId1 = createTestUser("r1@example.com", "r1", "Rem1");
         long userId2 = createTestUser("r2@example.com", "r2", "Rem2");
-        // дружба
-        mvc.perform(post("/users/" + userId1 + "/friends/" + userId2)).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userId2 + "/friends/" + userId1)).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userId1 + "/friends/" + userId2 + "/confirm")).andExpect(status().isOk());
-        // удаление
-        mvc.perform(delete("/users/" + userId1 + "/friends/" + userId2)).andExpect(status().isOk());
-        // проверка
+        // отправка заявки в друзья
+// userId2 отправляет заявку userId1
+        mvc.perform(post("/users/" + userId2 + "/friends/" + userId1))
+                .andExpect(status().isOk());
+
+// userId1 подтверждает заявку userId2
+        mvc.perform(post("/users/" + userId1 + "/friends/" + userId2 + "/confirm"))
+                .andExpect(status().isOk());
+        // удаление из друзей
+        mvc.perform(delete("/users/" + userId1 + "/friends/" + userId2))
+                .andExpect(status().isOk());
+        // проверка списка друзей
         mvc.perform(get("/users/" + userId1 + "/friends"))
                 .andExpect(status().isOk());
     }
@@ -92,15 +97,21 @@ public class FriendshipControllerTest {
         long f2 = createTestUser("f2@example.com", "f2", "F2");
         long f3 = createTestUser("f3@example.com", "f3", "F3");
         // для userA
+// userA отправляет заявку f1 и f2
         mvc.perform(post("/users/" + userA + "/friends/" + f1)).andExpect(status().isOk());
         mvc.perform(post("/users/" + userA + "/friends/" + f2)).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userA + "/friends/" + f1 + "/confirm")).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userA + "/friends/" + f2 + "/confirm")).andExpect(status().isOk());
-        // для userB
+
+// f1 и f2 подтверждают заявку userA
+        mvc.perform(post("/users/" + f1 + "/friends/" + userA + "/confirm")).andExpect(status().isOk());
+        mvc.perform(post("/users/" + f2 + "/friends/" + userA + "/confirm")).andExpect(status().isOk());
+
+// userB отправляет заявку f2 и f3
         mvc.perform(post("/users/" + userB + "/friends/" + f2)).andExpect(status().isOk());
         mvc.perform(post("/users/" + userB + "/friends/" + f3)).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userB + "/friends/" + f2 + "/confirm")).andExpect(status().isOk());
-        mvc.perform(post("/users/" + userB + "/friends/" + f3 + "/confirm")).andExpect(status().isOk());
+
+// f2 и f3 подтверждают заявку userB
+        mvc.perform(post("/users/" + f2 + "/friends/" + userB + "/confirm")).andExpect(status().isOk());
+        mvc.perform(post("/users/" + f3 + "/friends/" + userB + "/confirm")).andExpect(status().isOk());
         // общий друг
         mvc.perform(get("/users/" + userA + "/friends/common/" + userB))
                 .andExpect(status().isOk())

@@ -38,14 +38,25 @@ public class FilmControllerTest {
     public void setup() throws Exception {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
+            stmt.execute("DELETE FROM FILM_LIKES");
             stmt.execute("DELETE FROM FILM_GENRES");
             stmt.execute("DELETE FROM FILMS");
+            stmt.execute("DELETE FROM USERS");
             stmt.execute("DELETE FROM GENRES");
             stmt.execute("DELETE FROM MPA");
-            // вставляем жанры
+
+            // Insert genres
             stmt.execute("MERGE INTO GENRES (id, name) VALUES (1, 'Комедия'), (2, 'Драма'), (3, 'Триллер'), (4, 'Боевик'), (5, 'Мелодрама');");
-            // вставляем MPA
+
+            // Insert MPA ratings
             stmt.execute("MERGE INTO MPA (id, name) VALUES (1, 'G'), (2, 'PG'), (3, 'PG-13'), (4, 'R'), (5, 'NC-17');");
+
+            // Insert users with ids 1 to 20
+            for (int i = 1; i <= 20; i++) {
+                stmt.execute(String.format(
+                        "MERGE INTO USERS (id, email, login, name, birthday) VALUES (%d, 'user%d@example.com', 'user%d', 'User %d', DATE '1990-01-01')",
+                        i, i, i, i));
+            }
         }
     }
 
@@ -81,7 +92,7 @@ public class FilmControllerTest {
         film.setReleaseDate(LocalDate.of(2010, 5, 10));
         film.setDuration(90);
         film.setMpa(new Mpa(2, null));
-        film.setGenres(Set.of(new Genre(1, null), new Genre(3, null), new Genre(5, null)));
+        film.setGenres(Set.of(new Genre(1, null), new Genre(2, null)));
 
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,21 +229,41 @@ public class FilmControllerTest {
 
     @Test
     public void getPopular_ShouldReturnList() throws Exception {
-        // создаем фильм
-        var film = new Film();
-        film.setName("Popular");
-        film.setDescription("Desc");
-        film.setReleaseDate(LocalDate.of(2000, 1, 1));
-        film.setDuration(100);
-        film.setMpa(new Mpa(1, null));
-        film.setGenres(Set.of(new Genre(1, null)));
-        mvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isCreated());
+        // Создаём 20 фильмов с разным количеством лайков
+        for (int i = 1; i <= 20; i++) {
+            Film film = new Film();
+            film.setName("Film " + i);
+            film.setDescription("Description " + i);
+            film.setReleaseDate(LocalDate.of(2000, 1, 1));
+            film.setDuration(100);
+            film.setMpa(new Mpa(1, null));
+            film.setGenres(Set.of(new Genre(1, null)));
 
+            // Создаём фильм через API
+            String response = mvc.perform(post("/films")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(film)))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            Film createdFilm = mapper.readValue(response, Film.class);
+
+            // Добавляем лайки: фильму i ставим i лайков (от пользователей с id 1..i)
+            for (long userId = 1; userId <= i; userId++) {
+                mvc.perform(put("/films/" + createdFilm.getId() + "/like/" + userId))
+                        .andExpect(status().isOk());
+            }
+        }
+
+        // Запрашиваем топ 5 популярных фильмов
         mvc.perform(get("/films/popular?count=5"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                // Проверяем, что первый фильм имеет 20 лайков
+                .andExpect(jsonPath("$[0].likes.length()").value(20))
+                .andExpect(jsonPath("$[1].likes.length()").value(19));
     }
 
     @Test

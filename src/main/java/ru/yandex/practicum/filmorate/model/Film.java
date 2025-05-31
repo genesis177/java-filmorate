@@ -11,11 +11,15 @@ public class Film {
     private Integer id;
     private String name;
     private String description;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate releaseDate;
+
     private Integer duration;
 
     private Mpa mpa;
+
     private Set<Genre> genres = new LinkedHashSet<>();
+
     private Set<Long> likes = new HashSet<>();
 }

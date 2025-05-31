@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
+    private final FriendshipService friendshipService;
 
     public User addUser(User user) {
         return userStorage.add(user);
@@ -33,37 +34,21 @@ public class UserService {
         userStorage.delete(id);
     }
 
-    public void addFriend(Long userId, Long friendId) {
-        User user = userStorage.getById(userId).orElseThrow();
-        User friend = userStorage.getById(friendId).orElseThrow();
-        user.getFriends().add(friendId);
-        userStorage.update(user);
-    }
-
-    public void removeFriend(Long userId, Long friendId) {
-        User user = userStorage.getById(userId).orElseThrow();
-        user.getFriends().remove(friendId);
-        userStorage.update(user);
-    }
-
+    // Получить список друзей пользователя (только подтвержденных)
     public List<User> getFriends(Long userId) {
-        User user = userStorage.getById(userId).orElseThrow();
-        return user.getFriends().stream()
+        Set<Long> friendIds = friendshipService.getFriends(userId);
+        return friendIds.stream()
                 .map(fid -> userStorage.getById(fid).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
+    // Получить общих друзей двух пользователей
     public List<User> getCommonFriends(Long userId, Long otherId) {
-        Set<Long> friends1 = new HashSet<>(userStorage.getById(userId).orElseThrow().getFriends());
-        Set<Long> friends2 = new HashSet<>(userStorage.getById(otherId).orElseThrow().getFriends());
-        friends1.retainAll(friends2);
-        return friends1.stream()
+        Set<Long> commonFriendIds = friendshipService.getCommonFriends(userId, otherId);
+        return commonFriendIds.stream()
                 .map(fid -> userStorage.getById(fid).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    public void confirmFriendship(Long id, Long friendId) {
     }
 }

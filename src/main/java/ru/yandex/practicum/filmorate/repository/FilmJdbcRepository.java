@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -18,6 +19,7 @@ import java.sql.Statement;
 import java.util.*;
 
 @Repository
+@Primary
 public class FilmJdbcRepository implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -58,7 +60,6 @@ public class FilmJdbcRepository implements FilmStorage {
             }
         }
 
-        // Возвращаем фильм из базы, чтобы жанры и mpa были актуальны
         return getById(id).orElseThrow(() -> new RuntimeException("Film not found after insert"));
     }
 
@@ -88,7 +89,8 @@ public class FilmJdbcRepository implements FilmStorage {
         } else {
             film.setGenres(new LinkedHashSet<>());
         }
-        return Optional.of(film);
+
+        return getById(film.getId());
     }
 
     @Override
@@ -96,6 +98,7 @@ public class FilmJdbcRepository implements FilmStorage {
         try {
             String sql = "SELECT * FROM FILMS WHERE id = ?";
             Film film = jdbcTemplate.queryForObject(sql, filmRowMapper, id);
+
             // загружаем жанры
             List<Integer> genreIds = jdbcTemplate.queryForList(
                     "SELECT genre_id FROM FILM_GENRES WHERE film_id = ?", Integer.class, id);
@@ -113,7 +116,7 @@ public class FilmJdbcRepository implements FilmStorage {
                     "SELECT user_id FROM FILM_LIKES WHERE film_id = ?", Long.class, id);
             film.setLikes(new HashSet<>(likes));
 
-            return Optional.ofNullable(film);
+            return Optional.of(film);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -132,10 +135,8 @@ public class FilmJdbcRepository implements FilmStorage {
             }
             film.setGenres(genres);
 
-            // загружаем MPA
             mpaStorage.getById(film.getMpa().getId()).ifPresent(film::setMpa);
 
-            // загружаем лайки
             List<Long> likes = jdbcTemplate.queryForList(
                     "SELECT user_id FROM FILM_LIKES WHERE film_id = ?", Long.class, film.getId());
             film.setLikes(new HashSet<>(likes));
@@ -153,6 +154,8 @@ public class FilmJdbcRepository implements FilmStorage {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE film_id = ? AND user_id = ?", filmId, userId);
     }
 
+
+
     private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {
         Film film = new Film();
         film.setId(rs.getInt("id"));
@@ -160,9 +163,7 @@ public class FilmJdbcRepository implements FilmStorage {
         film.setDescription(rs.getString("description"));
         film.setReleaseDate(rs.getDate("release_date").toLocalDate());
         film.setDuration(rs.getInt("duration"));
-        // Сохраняем только id MPA, сам объект загрузим позже
         film.setMpa(new Mpa(rs.getInt("mpa_id"), null));
-        // жанры и лайки загружаются отдельно
         return film;
     };
 }

@@ -9,11 +9,9 @@ import java.util.Set;
 public interface GenreStorage {
     List<Genre> getAll();
 
-    Optional<Genre> getById(int id);
+    Optional<Genre> getById(Integer id);
 
     boolean existsById(Integer id);
-
-    Optional<Genre> getById(Integer id);
 
     Set<Genre> resolveGenres(Set<Genre> genres);
 }
