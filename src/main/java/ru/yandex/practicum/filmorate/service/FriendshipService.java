@@ -15,11 +15,11 @@ public class FriendshipService {
     private final UserStorage userStorage;
     private final FriendshipJdbcRepository friendshipRepository;
     public static final Logger log = LoggerFactory.getLogger(FriendshipService.class);
-    private final JdbcTemplate jdbcTemplate; // Changed from FilmService to JdbcTemplate
+    private final JdbcTemplate jdbcTemplate;
 
     public FriendshipService(UserStorage userStorage,
                              FriendshipJdbcRepository friendshipRepository,
-                             JdbcTemplate jdbcTemplate) { // Add JdbcTemplate as dependency
+                             JdbcTemplate jdbcTemplate) {
         this.userStorage = userStorage;
         this.friendshipRepository = friendshipRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -54,7 +54,11 @@ public class FriendshipService {
     public void removeFriend(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        friendshipRepository.removeFriend(userId, friendId);
+
+        // Only delete the friendship record from userId to friendId
+        String sql = "DELETE FROM FRIENDS WHERE user_id = ? AND friend_id = ?";
+        int rowsDeleted = jdbcTemplate.update(sql, userId, friendId);
+        log.info("Deleted {} friendship records from {} to {}", rowsDeleted, userId, friendId);
     }
 
     public Set<Long> getFriends(Long userId) {

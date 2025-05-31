@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.util;
 
+import ru.yandex.practicum.filmorate.exception.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -30,11 +31,13 @@ public class ValidationUtil {
         if (genreService != null) {
             for (var genre : film.getGenres()) {
                 if (!genreService.existsById(genre.getId())) {
-                    throw new ValidationException("Жанр с id " + genre.getId() + " не существует");
+                    throw new GenreNotFoundException(genre.getId());
                 }
             }
         }
+
     }
+
 
     public static void validateUser(User user) {
         if (user.getEmail() == null || !user.getEmail().contains("@")) {

@@ -29,8 +29,11 @@ public class FilmController {
             ValidationUtil.validateFilm(film, genreService);
             Film created = filmService.add(film);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
-        } catch (ValidationException | GenreNotFoundException e) {
+        } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (GenreNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Collections.singletonMap("error", e.getMessage()));
         }
     }
@@ -50,7 +53,7 @@ public class FilmController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Collections.singletonMap("error", e.getMessage()));
         } catch (GenreNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Collections.singletonMap("error", e.getMessage()));
         }
     }

@@ -7,7 +7,6 @@ import java.util.*;
 
 @Component
 public class InMemoryGenreStorage implements GenreStorage {
-    // Список жанров должен совпадать с тем, что вставляется в базу в @BeforeEach
     private static final List<Genre> GENRES = List.of(
             new Genre(1, "Комедия"),
             new Genre(2, "Драма"),

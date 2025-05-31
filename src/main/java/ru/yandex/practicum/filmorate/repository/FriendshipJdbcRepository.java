@@ -36,11 +36,11 @@ public class FriendshipJdbcRepository {
         }
 
         jdbcTemplate.update(
-                "INSERT INTO FRIENDS (user_id, friend friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
+                "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
                 userId, friendId
         );
         jdbcTemplate.update(
-                "INSERT INTO FRIENDS ( (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
+                "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
                 friendId, userId
         );
         log.info("Added mutual friendship: {} <-> {}", userId, friendId);

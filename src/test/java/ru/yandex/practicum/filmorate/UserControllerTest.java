@@ -9,9 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -72,7 +70,6 @@ public class UserControllerTest {
 
     @Test
     public void updateUser_ShouldReturnUpdatedUser() throws Exception {
-        // Create initial user
         String createJson = "{ " +
                 "\"email\": \"update@example.com\", " +
                 "\"login\": \"update_login\", " +
@@ -88,7 +85,6 @@ public class UserControllerTest {
 
         long id = mapper.readTree(response).get("id").asLong();
 
-        // Update user
         String updateJson = "{ " +
                 "\"id\": " + id + ", " +
                 "\"email\": \"update@example.com.com\", " +

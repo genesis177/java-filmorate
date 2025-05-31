@@ -175,19 +175,19 @@ public class FilmControllerTest {
     }
 
     @Test
-    public void createFilmFailGenre_ShouldReturn400() throws Exception {
+    public void createFilmFailGenre_ShouldReturn404() throws Exception {
         var film = new Film();
         film.setName("Test Film");
         film.setDescription("Test Description");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
         film.setDuration(120);
         film.setMpa(new Mpa(1, null));
-        film.setGenres((Set.of(new Genre(999, null)))); // Invalid genre ID
+        film.setGenres((Set.of(new Genre(999, null))));
 
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Genre with id 999 not found"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Жанр с id 999 не существует"));
     }
 }
