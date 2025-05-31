@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -51,10 +52,11 @@ public class FilmJdbcRepository implements FilmStorage {
         Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
         film.setId(id);
 
+        // Сохраняем жанры
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
                 if (!genreStorage.existsById(genre.getId())) {
-                    throw new IllegalArgumentException("Жанр с id " + genre.getId() + " не существует");
+                    throw new GenreNotFoundException(genre.getId());
                 }
                 jdbcTemplate.update("INSERT INTO FILM_GENRES (film_id, genre_id) VALUES (?, ?)", id, genre.getId());
             }
@@ -82,7 +84,7 @@ public class FilmJdbcRepository implements FilmStorage {
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
                 if (!genreStorage.existsById(genre.getId())) {
-                    throw new IllegalArgumentException("Жанр с id " + genre.getId() + " не существует");
+                    throw new GenreNotFoundException(genre.getId());
                 }
                 jdbcTemplate.update("INSERT INTO FILM_GENRES (film_id, genre_id) VALUES (?, ?)", film.getId(), genre.getId());
             }
@@ -153,7 +155,6 @@ public class FilmJdbcRepository implements FilmStorage {
     public void removeLike(Integer filmId, Long userId) {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE film_id = ? AND user_id = ?", filmId, userId);
     }
-
 
 
     private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {

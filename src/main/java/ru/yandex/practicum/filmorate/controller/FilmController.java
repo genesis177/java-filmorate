@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -24,12 +26,22 @@ public class FilmController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Film> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
-        ValidationUtil.validateFilm(film, filmService);
-        film.setId(id);
-        return filmService.update(film)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    public ResponseEntity<?> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
+        try {
+            ValidationUtil.validateFilm(film, filmService);
+            film.setId(id);
+            Optional<Film> updatedFilm = filmService.update(film);
+            if (updatedFilm.isPresent()) {
+                return ResponseEntity.ok(updatedFilm.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(java.util.Collections.singletonMap("error", "Фильм не найден"));
+            }
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
+        }
+
     }
 
     @GetMapping("/{id}")

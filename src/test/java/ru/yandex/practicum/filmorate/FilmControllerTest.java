@@ -297,7 +297,7 @@ public class FilmControllerTest {
         mvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Жанр с id 9999 не существует"));
     }
 }

@@ -25,9 +25,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegal(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Collections.singletonMap("error", e.getMessage()));
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        Map<String, String> error = Map.of("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -54,10 +54,9 @@ public class GlobalExceptionHandler {
                 .body(Collections.singletonMap("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+    @ExceptionHandler(GenreNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleGenreNotFound(GenreNotFoundException ex) {
         Map<String, String> error = Map.of("error", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
-
 }
