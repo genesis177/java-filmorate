@@ -66,6 +66,7 @@ public class FriendshipControllerTest {
         // Попытка повторного добавления друга должна вернуть ошибку
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().is4xxClientError());
+
     }
 
     @Test

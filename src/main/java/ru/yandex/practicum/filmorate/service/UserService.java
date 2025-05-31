@@ -34,12 +34,9 @@ public class UserService {
         return Optional.empty();
     }
 
-    public User getUserWithFriends(Long userId) {
-        User user = userStorage.getById(userId)
+    public User getUserWithoutFriends(Long userId) {
+        return userStorage.getById(userId)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-        List<User> friends = getFriends(userId);
-        user.setFriends(new HashSet<>(friends));
-        return user;
     }
 
     public List<User> getAllUsers() {
@@ -54,13 +51,25 @@ public class UserService {
         return friendshipService.getFriends(userId);
     }
 
-    // Если нужно получить объекты друзей, можно оставить этот метод
     public List<User> getFriends(Long userId) {
         Set<Long> friendIds = friendshipService.getFriends(userId);
         return friendIds.stream()
-                .map(id -> userStorage.getById(id).orElse(null))
-                .filter(Objects::nonNull)
+                .map(fid -> getUserWithFriends(fid, 1))  // глубина 1
                 .collect(Collectors.toList());
+    }
+
+    public User getUserWithFriends(Long userId, int depth) {
+        User user = userStorage.getById(userId)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        if (depth > 0) {
+            List<User> friends = friendshipService.getFriends(userId).stream()
+                    .map(fid -> getUserWithFriends(fid, depth - 1))
+                    .toList();
+            user.setFriends(new HashSet<>(friends));
+        } else {
+            user.setFriends(Collections.emptySet());
+        }
+        return user;
     }
 
     public List<User> getCommonFriends(Long userId, Long otherId) {
