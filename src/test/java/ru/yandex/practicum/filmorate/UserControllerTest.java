@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.User;
@@ -27,6 +29,15 @@ public class UserControllerTest {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    public void cleanDb() {
+        jdbcTemplate.update("DELETE FROM USERS");
+        jdbcTemplate.update("ALTER TABLE USERS ALTER COLUMN id RESTART WITH 1");
+    }
 
     private long createTestUser(String email, String login, String name) throws Exception {
         String json = String.format(

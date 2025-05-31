@@ -45,8 +45,24 @@ public class FriendshipJdbcRepository {
         Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, friendId, userId);
         if (count == null || count == 0)
             throw new IllegalStateException("Заявки нет");
-        String sql = "UPDATE FRIENDS SET status='CONFIRMED' WHERE (user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)";
-        jdbcTemplate.update(sql, friendId, userId, userId, friendId);
+
+        // Обновляем статус заявки на CONFIRMED
+        String updateSql = "UPDATE FRIENDS SET status='CONFIRMED' WHERE user_id = ? AND friend_id = ?";
+        jdbcTemplate.update(updateSql, friendId, userId);
+
+        // Проверяем, есть ли обратная запись
+        String existsSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ?";
+        Integer reverseCount = jdbcTemplate.queryForObject(existsSql, Integer.class, userId, friendId);
+
+        if (reverseCount == null || reverseCount == 0) {
+            // Вставляем обратную запись с CONFIRMED
+            String insertSql = "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, ?, ?)";
+            jdbcTemplate.update(insertSql, userId, friendId, "CONFIRMED", Timestamp.valueOf(LocalDateTime.now()));
+        } else {
+            // Если обратная запись есть, обновляем её статус на CONFIRMED
+            String updateReverseSql = "UPDATE FRIENDS SET status='CONFIRMED' WHERE user_id = ? AND friend_id = ?";
+            jdbcTemplate.update(updateReverseSql, userId, friendId);
+        }
     }
 
     public void removeFriend(Long userId, Long friendId) {

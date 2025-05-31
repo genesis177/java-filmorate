@@ -40,6 +40,7 @@ public class FilmControllerTest {
              Statement stmt = conn.createStatement()) {
             stmt.execute("DELETE FROM FILM_LIKES");
             stmt.execute("DELETE FROM FILM_GENRES");
+            stmt.execute("DELETE FROM FRIENDS");  // <-- добавлено
             stmt.execute("DELETE FROM FILMS");
             stmt.execute("DELETE FROM USERS");
             stmt.execute("DELETE FROM GENRES");
