@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.repository.FriendshipJdbcRepository;
@@ -13,11 +14,15 @@ import java.util.Set;
 public class FriendshipService {
     private final UserStorage userStorage;
     private final FriendshipJdbcRepository friendshipRepository;
-    private static final Logger log = LoggerFactory.getLogger(FriendshipService.class);
+    public static final Logger log = LoggerFactory.getLogger(FriendshipService.class);
+    private final JdbcTemplate jdbcTemplate; // Changed from FilmService to JdbcTemplate
 
-    public FriendshipService(UserStorage userStorage, FriendshipJdbcRepository friendshipRepository) {
+    public FriendshipService(UserStorage userStorage,
+                             FriendshipJdbcRepository friendshipRepository,
+                             JdbcTemplate jdbcTemplate) { // Add JdbcTemplate as dependency
         this.userStorage = userStorage;
         this.friendshipRepository = friendshipRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     private void checkUserExists(Long userId) {
@@ -29,13 +34,12 @@ public class FriendshipService {
     public void sendFriendRequest(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        if (friendshipRepository.existsConfirmedFriendship(userId, friendId)) {
-            throw new IllegalStateException("Дружба уже есть");
-        }
-        if (friendshipRepository.existsPendingRequest(userId, friendId)) {
-            throw new IllegalStateException("Заявка уже отправлена");
-        }
-        friendshipRepository.addFriend(userId, friendId);
+
+        jdbcTemplate.update(
+                "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
+                userId, friendId
+        );
+        log.info("Добавление друга: userId={}, friendId={}", userId, friendId);
     }
 
     public void confirmFriendship(Long userId, Long friendId) {
@@ -50,9 +54,6 @@ public class FriendshipService {
     public void removeFriend(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        if (!friendshipRepository.existsFriendship(userId, friendId)) {
-            throw new IllegalStateException("Дружба не найдена");
-        }
         friendshipRepository.removeFriend(userId, friendId);
     }
 

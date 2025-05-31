@@ -3,8 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserDto;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -12,15 +10,16 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserStorage userStorage;
+    private final ru.yandex.practicum.filmorate.storage.UserStorage userStorage;
     private final FriendshipService friendshipService;
 
     public User addUser(User user) {
         return userStorage.add(user);
     }
 
-    public Optional<User> updateUser(User user) {
-        return userStorage.update(user);
+    public User update(User user) {
+        return userStorage.update(user)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
     }
 
     public Optional<User> getById(Long id) {
@@ -34,44 +33,15 @@ public class UserService {
         return Optional.empty();
     }
 
-    public User getUserWithoutFriends(Long userId) {
-        return userStorage.getById(userId)
-                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-    }
-
     public List<User> getAllUsers() {
         return userStorage.getAll();
-    }
-
-    public void deleteUser(Long id) {
-        userStorage.delete(id);
-    }
-
-    public Set<Long> getFriendIds(Long userId) {
-        return friendshipService.getFriends(userId);
     }
 
     public List<User> getFriends(Long userId) {
         Set<Long> friendIds = friendshipService.getFriends(userId);
         return friendIds.stream()
-                .map(fid -> userStorage.getById(fid).orElseThrow(() -> new NoSuchElementException("Пользователь не найден")))
+                .map(fid -> userStorage.getById(fid).orElseThrow(() -> new NoSuchElementException("User not found")))
                 .collect(Collectors.toList());
-    }
-
-    public User getUserWithFriends(Long userId) {
-        User user = userStorage.getById(userId)
-                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-        Set<Long> friendIds = friendshipService.getFriends(userId);
-        user.setFriends(friendIds);
-        return user;
-    }
-
-    public UserDto getUserWithFriendsDto(Long userId, int depth) {
-        User user = userStorage.getById(userId)
-                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-        Set<Long> friendIds = friendshipService.getFriends(userId);
-        user.setFriends(friendIds);
-        return toUserDto(user, depth);
     }
 
     public List<User> getCommonFriends(Long userId, Long otherId) {
@@ -80,31 +50,5 @@ public class UserService {
                 .map(fid -> userStorage.getById(fid).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    public UserDto toUserDto(User user, int depth) {
-        UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setEmail(user.getEmail());
-        dto.setLogin(user.getLogin());
-        dto.setName(user.getName());
-        dto.setBirthday(user.getBirthday());
-
-        if (user.getFriends() != null) {
-            dto.setFriends(user.getFriends().size());
-        } else {
-            dto.setFriends(0);
-        }
-
-        return dto;
-    }
-
-    public boolean existsById(Long id) {
-        return userStorage.getById(id).isPresent();
-    }
-
-    public User update(User user) {
-        return updateUser(user)
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
     }
 }

@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static ru.yandex.practicum.filmorate.service.FriendshipService.log;
+
 @Repository
 @Primary
 public class FriendshipJdbcRepository {
@@ -23,6 +25,25 @@ public class FriendshipJdbcRepository {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
         // Исправлено: возвращать true, если пользователь существует
         return count != null && count > 0;
+    }
+
+    public void sendFriendRequest(Long userId, Long friendId) {
+        if (!userExists(userId)) {
+            throw new NoSuchElementException("Пользователь не найден: " + userId);
+        }
+        if (!userExists(friendId)) {
+            throw new NoSuchElementException("Пользователь не найден: " + friendId);
+        }
+
+        jdbcTemplate.update(
+                "INSERT INTO FRIENDS (user_id, friend friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
+                userId, friendId
+        );
+        jdbcTemplate.update(
+                "INSERT INTO FRIENDS ( (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', CURRENT_TIMESTAMP)",
+                friendId, userId
+        );
+        log.info("Added mutual friendship: {} <-> {}", userId, friendId);
     }
 
     public boolean existsFriendship(Long userId, Long friendId) {
@@ -79,7 +100,8 @@ public class FriendshipJdbcRepository {
             throw new IllegalArgumentException("Пользователь не найден");
         }
         String sql = "DELETE FROM FRIENDS WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
-        jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+        int rowsDeleted = jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+        log.info("Deleted {} friendship records between {} and {}", rowsDeleted, userId, friendId);
     }
 
     public List<Long> getFriends(Long userId) {

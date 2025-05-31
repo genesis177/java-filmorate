@@ -6,14 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -28,35 +26,23 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        if (!userService.existsById(id)) {
-            throw new NoSuchElementException("User not found");
-        }
-        user.setId(id);
-        User updatedUser = userService.update(user);
-        return ResponseEntity.ok(updatedUser);
-    }
-
-
     @PutMapping
-    public ResponseEntity<?> updateUserWithoutId(@RequestBody User user) {
+    public ResponseEntity<?> updateUser(@RequestBody User user) {
         try {
             ValidationUtil.validateUser(user);
             if (user.getId() == null) {
-                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "User ID is required"));
+                return ResponseEntity.badRequest().body(Map.of("error", "User ID is required"));
             }
             User updatedUser = userService.update(user);
             return ResponseEntity.ok(updatedUser);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.singletonMap("error", e.getMessage()));
+                    .body(Map.of("error", "User not found"));
         } catch (ValidationException e) {
             return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable Long id) {
@@ -69,22 +55,4 @@ public class UserController {
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{id}/dto")
-    public ResponseEntity<UserDto> getUserDto(@PathVariable Long id) {
-        try {
-            UserDto userDto = userService.getUserWithFriendsDto(id, 1);
-            return ResponseEntity.ok(userDto);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
 }

@@ -60,7 +60,7 @@ public class FilmService {
         filmStorage.removeLike(filmId, userId);
     }
 
-    public boolean existsGenreById(Integer genreId) {
-        return genreStorage.existsById(genreId);
+    public void update(String s, Long userId, Long friendId) {
+
     }
 }

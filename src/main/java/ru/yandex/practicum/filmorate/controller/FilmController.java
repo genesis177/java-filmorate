@@ -21,7 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FilmController {
     private final FilmService filmService;
-    private final GenreService genreService;  // Добавляем GenreService
+    private final GenreService genreService;
 
     @PostMapping
     public ResponseEntity<?> createFilm(@RequestBody Film film) {
@@ -29,24 +29,29 @@ public class FilmController {
             ValidationUtil.validateFilm(film, genreService);
             Film created = filmService.add(film);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
-        } catch (ValidationException e) {
+        } catch (ValidationException | GenreNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.singletonMap("error", e.getMessage()));
-        } catch (GenreNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Collections.singletonMap("error", e.getMessage()));
         }
     }
 
     @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateFilm(@RequestBody Film film) {
-        ValidationUtil.validateFilm(film, genreService);
-        Optional<Film> updatedFilm = filmService.update(film);
-        if (updatedFilm.isPresent()) {
-            return ResponseEntity.ok(updatedFilm.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.singletonMap("error", "Фильм не найден"));
+        try {
+            ValidationUtil.validateFilm(film, genreService);
+            Optional<Film> updatedFilm = filmService.update(film);
+            if (updatedFilm.isPresent()) {
+                return ResponseEntity.ok(updatedFilm.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Collections.singletonMap("error", "Фильм не найден"));
+            }
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (GenreNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
         }
     }
 

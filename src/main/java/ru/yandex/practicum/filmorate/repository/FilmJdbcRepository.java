@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 
@@ -22,16 +23,13 @@ import java.util.*;
 @Repository
 @Primary
 public class FilmJdbcRepository implements FilmStorage {
-
     private final JdbcTemplate jdbcTemplate;
     private final GenreStorage genreStorage;
-    private final MpaStorage mpaStorage;
 
     @Autowired
     public FilmJdbcRepository(JdbcTemplate jdbcTemplate, GenreStorage genreStorage, MpaStorage mpaStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.genreStorage = genreStorage;
-        this.mpaStorage = mpaStorage;
     }
 
     @Override
@@ -52,7 +50,6 @@ public class FilmJdbcRepository implements FilmStorage {
         Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
         film.setId(id);
 
-        // Сохраняем жанры
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
                 if (!genreStorage.existsById(genre.getId())) {
@@ -75,11 +72,11 @@ public class FilmJdbcRepository implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
+
         if (rows == 0) {
             return Optional.empty();
         }
 
-        // Обновляем жанры
         jdbcTemplate.update("DELETE FROM FILM_GENRES WHERE film_id = ?", film.getId());
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             for (Genre genre : film.getGenres()) {
@@ -88,8 +85,6 @@ public class FilmJdbcRepository implements FilmStorage {
                 }
                 jdbcTemplate.update("INSERT INTO FILM_GENRES (film_id, genre_id) VALUES (?, ?)", film.getId(), genre.getId());
             }
-        } else {
-            film.setGenres(new LinkedHashSet<>());
         }
 
         return getById(film.getId());
@@ -98,10 +93,9 @@ public class FilmJdbcRepository implements FilmStorage {
     @Override
     public Optional<Film> getById(Integer id) {
         try {
-            String sql = "SELECT * FROM FILMS WHERE id = ?";
+            String sql = "SELECT f.*, m.name as mpa_name FROM FILMS f JOIN MPA m ON f.mpa_id = m.id WHERE f.id = ?";
             Film film = jdbcTemplate.queryForObject(sql, filmRowMapper, id);
 
-            // загружаем жанры
             List<Integer> genreIds = jdbcTemplate.queryForList(
                     "SELECT genre_id FROM FILM_GENRES WHERE film_id = ?", Integer.class, id);
             Set<Genre> genres = new LinkedHashSet<>();
@@ -110,10 +104,6 @@ public class FilmJdbcRepository implements FilmStorage {
             }
             film.setGenres(genres);
 
-            // загружаем MPA
-            mpaStorage.getById(film.getMpa().getId()).ifPresent(film::setMpa);
-
-            // загружаем лайки
             List<Long> likes = jdbcTemplate.queryForList(
                     "SELECT user_id FROM FILM_LIKES WHERE film_id = ?", Long.class, id);
             film.setLikes(new HashSet<>(likes));
@@ -126,8 +116,9 @@ public class FilmJdbcRepository implements FilmStorage {
 
     @Override
     public List<Film> getAll() {
-        String sql = "SELECT * FROM FILMS";
+        String sql = "SELECT f.*, m.name as mpa_name FROM FILMS f JOIN MPA m ON f.mpa_id = m.id";
         List<Film> films = jdbcTemplate.query(sql, filmRowMapper);
+
         for (Film film : films) {
             List<Integer> genreIds = jdbcTemplate.queryForList(
                     "SELECT genre_id FROM FILM_GENRES WHERE film_id = ?", Integer.class, film.getId());
@@ -136,8 +127,6 @@ public class FilmJdbcRepository implements FilmStorage {
                 genreStorage.getById(genreId).ifPresent(genres::add);
             }
             film.setGenres(genres);
-
-            mpaStorage.getById(film.getMpa().getId()).ifPresent(film::setMpa);
 
             List<Long> likes = jdbcTemplate.queryForList(
                     "SELECT user_id FROM FILM_LIKES WHERE film_id = ?", Long.class, film.getId());
@@ -156,7 +145,6 @@ public class FilmJdbcRepository implements FilmStorage {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE film_id = ? AND user_id = ?", filmId, userId);
     }
 
-
     private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {
         Film film = new Film();
         film.setId(rs.getInt("id"));
@@ -164,7 +152,12 @@ public class FilmJdbcRepository implements FilmStorage {
         film.setDescription(rs.getString("description"));
         film.setReleaseDate(rs.getDate("release_date").toLocalDate());
         film.setDuration(rs.getInt("duration"));
-        film.setMpa(new Mpa(rs.getInt("mpa_id"), null));
+
+        Mpa mpa = new Mpa();
+        mpa.setId(rs.getInt("mpa_id"));
+        mpa.setName(rs.getString("mpa_name"));
+        film.setMpa(mpa);
+
         return film;
     };
 }
