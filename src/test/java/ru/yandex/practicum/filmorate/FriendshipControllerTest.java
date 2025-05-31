@@ -45,7 +45,15 @@ public class FriendshipControllerTest {
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().isOk());
 
-        // Повторная попытка отправить заявку должна вернуть ошибку (например, 400 или 409)
+        // Подтверждаем заявку дружбы
+        mvc.perform(post("/users/" + userId2 + "/friends/" + userId1 + "/confirm"))
+                .andExpect(status().isOk());
+
+        // Теперь друг должен отображаться
+        mvc.perform(get("/users/" + userId1 + "/friends"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(userId2));
+
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().is4xxClientError());
     }

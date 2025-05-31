@@ -27,18 +27,18 @@ public class UserService {
         Optional<User> userOpt = userStorage.getById(id);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            Set<Long> friendIds = getFriendIds(id);
-            user.setFriends(friendIds);
+            List<User> friends = getFriends(id);
+            user.setFriends(new HashSet<>(friends));
             return Optional.of(user);
         }
         return Optional.empty();
     }
 
-    public User getUserWithFriends(Long id) {
-        User user = userStorage.getById(id)
+    public User getUserWithFriends(Long userId) {
+        User user = userStorage.getById(userId)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-        Set<Long> friendIds = getFriendIds(id);
-        user.setFriends(friendIds);
+        List<User> friends = getFriends(userId);
+        user.setFriends(new HashSet<>(friends));
         return user;
     }
 
@@ -58,7 +58,7 @@ public class UserService {
     public List<User> getFriends(Long userId) {
         Set<Long> friendIds = friendshipService.getFriends(userId);
         return friendIds.stream()
-                .map(fid -> userStorage.getById(fid).orElse(null))
+                .map(id -> userStorage.getById(id).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }

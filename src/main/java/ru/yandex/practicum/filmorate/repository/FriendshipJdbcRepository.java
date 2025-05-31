@@ -96,9 +96,10 @@ public class FriendshipJdbcRepository {
         if (!userExists(userId)) {
             throw new NoSuchElementException("Пользователь не найден");
         }
-        String sql = "SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friendId " +
-                "FROM FRIENDS WHERE (user_id = ? OR friend_id = ?) AND status = 'CONFIRMED'";
-        return jdbcTemplate.queryForList(sql, Long.class, userId, userId, userId);
+        String sql = "SELECT friend_id FROM FRIENDS WHERE user_id = ? AND status = 'CONFIRMED'";
+        List<Long> friends = jdbcTemplate.queryForList(sql, Long.class, userId);
+        System.out.println("getFriends for userId=" + userId + ": " + friends);
+        return friends;
     }
 
     public List<Long> getCommonFriends(Long userId1, Long userId2) {

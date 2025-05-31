@@ -7,6 +7,7 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class User {
@@ -14,8 +15,17 @@ public class User {
     private String email;
     private String login;
     private String name;
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
-    @JsonProperty("friends")
-    private Set<Long> friends = new HashSet<>();
+    private Set<User> friends = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return "User(id=" + id +
+                ", email=" + email +
+                ", login=" + login +
+                ", name=" + name +
+                ", birthday=" + birthday +
+                ", friendsCount=" + (friends == null ? 0 : friends.size()) +
+                ")";
+    }
 }

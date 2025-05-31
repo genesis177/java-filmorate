@@ -1,5 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.repository.FriendshipJdbcRepository;
@@ -11,6 +13,7 @@ import java.util.Set;
 public class FriendshipService {
     private final UserStorage userStorage;
     private final FriendshipJdbcRepository friendshipRepository;
+    private static final Logger log = LoggerFactory.getLogger(FriendshipService.class);
 
     public FriendshipService(UserStorage userStorage, FriendshipJdbcRepository friendshipRepository) {
         this.userStorage = userStorage;
@@ -55,7 +58,9 @@ public class FriendshipService {
 
     public Set<Long> getFriends(Long userId) {
         checkUserExists(userId);
-        return Set.copyOf(friendshipRepository.getFriends(userId));
+        Set<Long> friends = Set.copyOf(friendshipRepository.getFriends(userId));
+        log.info("Друзья пользователя {}: {}", userId, friends);
+        return friends;
     }
 
     public Set<Long> getCommonFriends(Long userId, Long otherId) {
