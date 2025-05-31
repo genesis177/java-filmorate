@@ -24,7 +24,22 @@ public class UserService {
     }
 
     public Optional<User> getById(Long id) {
-        return userStorage.getById(id);
+        Optional<User> userOpt = userStorage.getById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            Set<Long> friendIds = getFriendIds(id);
+            user.setFriends(friendIds);
+            return Optional.of(user);
+        }
+        return Optional.empty();
+    }
+
+    public User getUserWithFriends(Long id) {
+        User user = userStorage.getById(id)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        Set<Long> friendIds = getFriendIds(id);
+        user.setFriends(friendIds);
+        return user;
     }
 
     public List<User> getAllUsers() {
@@ -35,7 +50,11 @@ public class UserService {
         userStorage.delete(id);
     }
 
-    // Получить список друзей пользователя (только подтвержденных)
+    public Set<Long> getFriendIds(Long userId) {
+        return friendshipService.getFriends(userId);
+    }
+
+    // Если нужно получить объекты друзей, можно оставить этот метод
     public List<User> getFriends(Long userId) {
         Set<Long> friendIds = friendshipService.getFriends(userId);
         return friendIds.stream()
@@ -44,7 +63,6 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    // Получить общих друзей двух пользователей
     public List<User> getCommonFriends(Long userId, Long otherId) {
         Set<Long> commonFriendIds = friendshipService.getCommonFriends(userId, otherId);
         return commonFriendIds.stream()

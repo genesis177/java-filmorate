@@ -60,15 +60,27 @@ public class FriendshipJdbcRepository {
     public void confirmFriend(Long userId, Long friendId) {
         String checkSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ? AND status = 'PENDING'";
         Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, friendId, userId);
-        System.out.println("confirmFriend: Проверка заявки от " + friendId + " к " + userId + ". Найдено заявок: " + count);
         if (count == null || count == 0) {
             throw new IllegalStateException("Заявки нет");
         }
+        // Обновляем текущую заявку
         String updateSql = "UPDATE FRIENDS SET status = 'CONFIRMED', request_time = ? WHERE user_id = ? AND friend_id = ?";
         int updated = jdbcTemplate.update(updateSql, Timestamp.valueOf(LocalDateTime.now()), friendId, userId);
-        System.out.println("confirmFriend: Подтверждена заявка от " + friendId + " к " + userId + ". Обновлено строк: " + updated);
         if (updated == 0) {
             throw new RuntimeException("Не удалось подтвердить заявку");
+        }
+        // Создаем или обновляем обратную заявку
+        // Проверим, существует ли уже запись для обратной стороны
+        String checkReverseSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ?";
+        Integer reverseCount = jdbcTemplate.queryForObject(checkReverseSql, Integer.class, userId, friendId);
+        if (reverseCount == null || reverseCount == 0) {
+            // Создаем новую запись с подтвержденным статусом
+            String insertSql = "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'CONFIRMED', ?)";
+            jdbcTemplate.update(insertSql, userId, friendId, Timestamp.valueOf(LocalDateTime.now()));
+        } else {
+            // Обновляем существующую (если есть)
+            String updateReverseSql = "UPDATE FRIENDS SET status='CONFIRMED', request_time = ? WHERE user_id = ? AND friend_id = ?";
+            jdbcTemplate.update(updateReverseSql, Timestamp.valueOf(LocalDateTime.now()), userId, friendId);
         }
     }
 

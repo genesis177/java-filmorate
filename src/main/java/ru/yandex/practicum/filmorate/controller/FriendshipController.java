@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -8,7 +9,9 @@ import ru.yandex.practicum.filmorate.service.FriendshipService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -18,15 +21,22 @@ public class FriendshipController {
 
     // Отправка заявки в друзья (PUT или POST)
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Void> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<User> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Добавление друга: userId={}, friendId={}", id, friendId);
         friendshipService.sendFriendRequest(id, friendId);
-        return ResponseEntity.ok().build();
+        User friend = userService.getUserWithFriends(friendId);
+        log.info("Друг найден: {}", friend);
+        return ResponseEntity.ok(friend);
     }
 
     @PostMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Void> addFriendPost(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<User> addFriendPost(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Добавление друга (POST): userId={}, friendId={}", id, friendId);
         friendshipService.sendFriendRequest(id, friendId);
-        return ResponseEntity.ok().build();
+        User friend = userService.getById(friendId)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        log.info("Друг найден: {}", friend);
+        return ResponseEntity.ok(friend);
     }
 
     // Подтверждение заявки в друзья (POST)
@@ -63,4 +73,5 @@ public class FriendshipController {
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(commonFriends);
     }
+
 }
