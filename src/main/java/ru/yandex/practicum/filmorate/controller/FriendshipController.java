@@ -24,9 +24,10 @@ public class FriendshipController {
     public ResponseEntity<User> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Добавление друга: userId={}, friendId={}", id, friendId);
         friendshipService.sendFriendRequest(id, friendId);
-        User friend = userService.getUserWithFriends(friendId);
-        log.info("Друг найден: {}", friend);
-        return ResponseEntity.ok(friend);
+        // Возвращаем пользователя с обновленным списком друзей
+        User user = userService.getUserWithFriends(id);
+        log.info("Пользователь с друзьями: {}", user);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/{id}/friends/{friendId}")
@@ -41,9 +42,10 @@ public class FriendshipController {
 
     // Подтверждение заявки в друзья (POST)
     @PostMapping("/{id}/friends/{friendId}/confirm")
-    public ResponseEntity<Void> confirmFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<User> confirmFriend(@PathVariable Long id, @PathVariable Long friendId) {
         friendshipService.confirmFriendship(id, friendId);
-        return ResponseEntity.ok().build();
+        User user = userService.getUserWithFriends(id);
+        return ResponseEntity.ok(user);
     }
 
     // Удаление из друзей (DELETE)
