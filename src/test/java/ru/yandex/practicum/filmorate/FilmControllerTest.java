@@ -1,0 +1,317 @@
+package ru.yandex.practicum.filmorate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.Set;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest(classes = FinalProjectApplication.class)
+@AutoConfigureMockMvc
+public class FilmControllerTest {
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper mapper;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @BeforeEach
+    public void setup() throws Exception {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DELETE FROM FILM_LIKES");
+            stmt.execute("DELETE FROM FILM_GENRES");
+            stmt.execute("DELETE FROM FRIENDS");  // <-- добавлено
+            stmt.execute("DELETE FROM FILMS");
+            stmt.execute("DELETE FROM USERS");
+            stmt.execute("DELETE FROM GENRES");
+            stmt.execute("DELETE FROM MPA");
+
+            // Insert genres
+            stmt.execute("DELETE FROM GENRES");
+            stmt.execute("MERGE INTO GENRES (id, name) VALUES " +
+                    "(1, 'Комедия'), " +
+                    "(2, 'Драма'), " +
+                    "(3, 'Мультфильм'), " +
+                    "(4, 'Триллер'), " +
+                    "(5, 'Документальный'), " +
+                    "(6, 'Боевик');");
+
+            stmt.execute("DELETE FROM MPA");
+            stmt.execute("MERGE INTO MPA (id, name) VALUES " +
+                    "(1, 'G'), " +
+                    "(2, 'PG'), " +
+                    "(3, 'PG-13'), " +
+                    "(4, 'R'), " +
+                    "(5, 'NC-17');");
+
+            // Insert users with ids 1 to 20
+            for (int i = 1; i <= 20; i++) {
+                stmt.execute(String.format(
+                        "MERGE INTO USERS (id, email, login, name, birthday) VALUES (%d, 'user%d@example.com', 'user%d', 'User %d', DATE '1990-01-01')",
+                        i, i, i, i));
+            }
+        }
+    }
+
+    @Test
+    public void createFilm_ShouldReturn201AndBody() throws Exception {
+        var film = new Film();
+        film.setName("Test Film");
+        film.setDescription("Test Description");
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film.setDuration(120);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null), new Genre(2, null)));
+
+        String responseStr = mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer id = mapper.readTree(responseStr).get("id").asInt();
+
+        mvc.perform(get("/films/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.name").value("Test Film"));
+    }
+
+    @Test
+    public void createFilmSeveralGenres_ShouldReturn201() throws Exception {
+        var film = new Film();
+        film.setName("Genre Test");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2010, 5, 10));
+        film.setDuration(90);
+        film.setMpa(new Mpa(2, null));
+        film.setGenres(Set.of(new Genre(1, null), new Genre(2, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    public void createFilmFailName_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName(""); // некорректное имя
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2010, 5, 10));
+        film.setDuration(90);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Название не может быть пустым"));
+    }
+
+    @Test
+    public void createFilmFailDescription_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName("Valid");
+        film.setDescription("x".repeat(201));
+        film.setReleaseDate(LocalDate.of(2010, 5, 10));
+        film.setDuration(90);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Описание не должно превышать 200 символов"));
+    }
+
+    @Test
+    public void createFilmFailReleaseDate_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName("Valid");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(1800, 1, 1));
+        film.setDuration(90);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Дата релиза не может быть раньше 28.12.1895"));
+    }
+
+    @Test
+    public void createFilmFailDuration_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName("Valid");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film.setDuration(0);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Длительность должна быть положительным числом"));
+    }
+
+    @Test
+    public void updateFilm_ShouldReturn200AndUpdated() throws Exception {
+        // создаем фильм
+        var film = new Film();
+        film.setName("Original");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film.setDuration(100);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        String resp = mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        int id = mapper.readTree(resp).get("id").asInt();
+
+        // обновляем
+        var updated = new Film();
+        updated.setId(id);
+        updated.setName("Updated");
+        updated.setDescription("Desc");
+        updated.setReleaseDate(LocalDate.of(2000, 1, 1));
+        updated.setDuration(100);
+        updated.setMpa(new Mpa(1, null));
+        updated.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(put("/films")  // <-- убрали /{id}
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(updated)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated"));
+    }
+
+    @Test
+    public void updateUnknown_ShouldReturn404() throws Exception {
+        var film = new Film();
+        film.setId(99999);  // обязательно указать id в теле
+        film.setName("Not Exist");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film.setDuration(100);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(1, null)));
+
+        mvc.perform(put("/films")  // <-- убрали /99999
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Фильм не найден"));
+    }
+
+    @Test
+    public void getAllFilms_ShouldReturnList() throws Exception {
+        mvc.perform(get("/films"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    public void getPopular_ShouldReturnList() throws Exception {
+        // Создаём 20 фильмов с разным количеством лайков
+        for (int i = 1; i <= 20; i++) {
+            Film film = new Film();
+            film.setName("Film " + i);
+            film.setDescription("Description " + i);
+            film.setReleaseDate(LocalDate.of(2000, 1, 1));
+            film.setDuration(100);
+            film.setMpa(new Mpa(1, null));
+            film.setGenres(Set.of(new Genre(1, null)));
+
+            // Создаём фильм через API
+            String response = mvc.perform(post("/films")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(film)))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            Film createdFilm = mapper.readValue(response, Film.class);
+
+            // Добавляем лайки: фильму i ставим i лайков (от пользователей с id 1..i)
+            for (long userId = 1; userId <= i; userId++) {
+                mvc.perform(put("/films/" + createdFilm.getId() + "/like/" + userId))
+                        .andExpect(status().isOk());
+            }
+        }
+
+        // Запрашиваем топ 5 популярных фильмов
+        mvc.perform(get("/films/popular?count=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                // Проверяем, что первый фильм имеет 20 лайков
+                .andExpect(jsonPath("$[0].likes.length()").value(20))
+                .andExpect(jsonPath("$[1].likes.length()").value(19));
+    }
+
+    @Test
+    public void createFilmWithInvalidGenre_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName("Test Invalid Genre");
+        film.setDescription("Some description");
+        film.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film.setDuration(100);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(9999, null))); // несуществующий жанр
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Жанр с id 9999 не существует"));
+    }
+
+    @Test
+    public void createFilmFailGenre_ShouldReturn400() throws Exception {
+        var film = new Film();
+        film.setName("InvalidGenre");
+        film.setDescription("Desc");
+        film.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film.setDuration(100);
+        film.setMpa(new Mpa(1, null));
+        film.setGenres(Set.of(new Genre(9999, null)));
+
+        mvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(film)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Жанр с id 9999 не существует"));
+    }
+}
