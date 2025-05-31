@@ -42,31 +42,18 @@ public class FriendshipControllerTest {
         long userId1 = createTestUser("f1@example.com", "f1", "Friend1");
         long userId2 = createTestUser("f2@example.com", "f2", "Friend2");
 
-        // Отправляем заявку в друзья
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().isOk());
 
-        // Подтверждаем заявку дружбы
         mvc.perform(post("/users/" + userId2 + "/friends/" + userId1 + "/confirm"))
                 .andExpect(status().isOk());
 
-        // Получаем список друзей и выводим тело ответа
-        MvcResult result = mvc.perform(get("/users/" + userId1 + "/friends"))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        System.out.println("Friends response: " + content);
-
-        // Проверяем, что первый друг имеет нужный id
         mvc.perform(get("/users/" + userId1 + "/friends"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(userId2));
 
-        // Попытка повторного добавления друга должна вернуть ошибку
         mvc.perform(put("/users/" + userId1 + "/friends/" + userId2))
                 .andExpect(status().is4xxClientError());
-
     }
 
     @Test
