@@ -30,6 +30,8 @@ public class UserController {
         User updatedUser = userService.updateUser(user);
         return ResponseEntity.ok(updatedUser);
     }
+
+
     @PutMapping
     public ResponseEntity<User> updateUserWithoutId(@RequestBody User user) {
         ValidationUtil.validateUser(user);
