@@ -47,7 +47,7 @@ public class FriendshipService {
         checkUserExists(userId);
         checkUserExists(friendId);
         if (!friendshipRepository.existsFriendship(userId, friendId)) {
-            throw new IllegalStateException("Дружба не найдена");
+            return;
         }
         friendshipRepository.removeFriend(userId, friendId);
     }

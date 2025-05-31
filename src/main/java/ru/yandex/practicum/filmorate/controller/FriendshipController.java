@@ -33,8 +33,16 @@ public class FriendshipController {
     // Удаление из друзей (DELETE)
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<Void> removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        friendshipService.removeFriend(id, friendId);
-        return ResponseEntity.ok().build();
+        try {
+            friendshipService.removeFriend(id, friendId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            if ("Дружба не найдена".equals(e.getMessage())) {
+                // Возвращаем 200, если дружба не найдена
+                return ResponseEntity.ok().build();
+            }
+            throw e;
+        }
     }
 
     // Получить список друзей (GET)
