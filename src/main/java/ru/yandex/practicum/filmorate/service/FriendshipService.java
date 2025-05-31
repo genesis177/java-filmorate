@@ -50,17 +50,15 @@ public class FriendshipService {
     public void removeFriend(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        if (!friendshipRepository.existsConfirmedFriendship(userId, friendId)) {
-            return;
+        if (!friendshipRepository.existsFriendship(userId, friendId)) {
+            throw new IllegalStateException("Дружба не найдена");
         }
         friendshipRepository.removeFriend(userId, friendId);
     }
 
     public Set<Long> getFriends(Long userId) {
         checkUserExists(userId);
-        Set<Long> friends = Set.copyOf(friendshipRepository.getFriends(userId));
-        log.info("Друзья пользователя {}: {}", userId, friends);
-        return friends;
+        return Set.copyOf(friendshipRepository.getFriends(userId));
     }
 
     public Set<Long> getCommonFriends(Long userId, Long otherId) {

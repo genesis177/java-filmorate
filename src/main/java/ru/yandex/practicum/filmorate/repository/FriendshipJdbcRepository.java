@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,7 +21,8 @@ public class FriendshipJdbcRepository {
     public boolean userExists(Long id) {
         String sql = "SELECT COUNT(*) FROM USERS WHERE id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
-        return count == null || count <= 0;
+        // Исправлено: возвращать true, если пользователь существует
+        return count != null && count > 0;
     }
 
     public boolean existsFriendship(Long userId, Long friendId) {
@@ -43,7 +44,7 @@ public class FriendshipJdbcRepository {
     }
 
     public void addFriend(Long userId, Long friendId) {
-        if (userExists(userId) || userExists(friendId)) {
+        if (!userExists(userId) || !userExists(friendId)) {
             throw new IllegalArgumentException("Пользователь не найден");
         }
         if (existsFriendship(userId, friendId)) {
@@ -51,14 +52,13 @@ public class FriendshipJdbcRepository {
         }
         String sql = "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'PENDING', ?)";
         int updated = jdbcTemplate.update(sql, userId, friendId, Timestamp.valueOf(LocalDateTime.now()));
-        System.out.println("addFriend: Добавлена заявка в друзья от пользователя " + userId + " к пользователю " + friendId + ". Обновлено строк: " + updated);
         if (updated == 0) {
             throw new RuntimeException("Не удалось добавить заявку в друзья");
         }
     }
 
     public void confirmFriend(Long userId, Long friendId) {
-        // Проверяем, что существует заявка от friendId к userId со статусом PENDING
+        // Проверка наличия заявки от friendId к userId
         String checkSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ? AND status = 'PENDING'";
         Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, friendId, userId);
         if (count == null || count == 0) {
@@ -72,11 +72,10 @@ public class FriendshipJdbcRepository {
             throw new RuntimeException("Не удалось подтвердить заявку");
         }
 
-        // Убираем создание обратной записи — дружба теперь односторонняя
     }
 
     public void removeFriend(Long userId, Long friendId) {
-        if (userExists(userId) || userExists(friendId)) {
+        if (!userExists(userId) || !userExists(friendId)) {
             throw new IllegalArgumentException("Пользователь не найден");
         }
         String sql = "DELETE FROM FRIENDS WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
@@ -84,25 +83,23 @@ public class FriendshipJdbcRepository {
     }
 
     public List<Long> getFriends(Long userId) {
-        if (userExists(userId)) {
+        if (!userExists(userId)) {
             throw new NoSuchElementException("Пользователь не найден");
         }
         String sql = "SELECT friend_id FROM FRIENDS WHERE user_id = ? AND status = 'CONFIRMED'";
-        List<Long> friends = jdbcTemplate.queryForList(sql, Long.class, userId);
-        System.out.println("getFriends for userId=" + userId + ": " + friends);
-        return friends;
+        return jdbcTemplate.queryForList(sql, Long.class, userId);
     }
 
     public List<Long> getCommonFriends(Long userId1, Long userId2) {
-        if (userExists(userId1) || userExists(userId2)) {
+        if (!userExists(userId1) || !userExists(userId2)) {
             throw new NoSuchElementException("Пользователь не найден");
         }
-        String sql = "SELECT friendId FROM (" +
-                "SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friendId " +
+        String sql = "SELECT friend_id FROM (" +
+                "SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friend_id " +
                 "FROM FRIENDS WHERE (user_id = ? OR friend_id = ?) AND status = 'CONFIRMED'" +
                 ") AS u1 INTERSECT " +
-                "SELECT friendId FROM (" +
-                "SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friendId " +
+                "SELECT friend_id FROM (" +
+                "SELECT CASE WHEN user_id = ? THEN friend_id ELSE user_id END AS friend_id " +
                 "FROM FRIENDS WHERE (user_id = ? OR friend_id = ?) AND status = 'CONFIRMED'" +
                 ")";
         return jdbcTemplate.queryForList(sql, Long.class, userId1, userId1, userId1, userId2, userId2, userId2);

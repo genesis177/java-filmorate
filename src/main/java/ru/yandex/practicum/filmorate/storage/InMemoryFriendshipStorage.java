@@ -11,12 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class InMemoryFriendshipStorage {
 
-    // Ключ — пара userId и friendId (userId -> friendId)
     private final Map<Long, Map<Long, Friendship>> friendships = new ConcurrentHashMap<>();
 
     public boolean userExists(Long userId) {
-        // В in-memory хранилище друзей не храним пользователей,
-        // предполагается, что проверка пользователей происходит в UserStorage
+        // В данном контексте, предполагается, что пользователь существует, проверка вне
+        // Можно оставить как есть или реализовать внешнюю проверку
         return true;
     }
 
@@ -35,19 +34,20 @@ public class InMemoryFriendshipStorage {
     }
 
     public void confirmFriend(Long userId, Long friendId) {
+        // Проверяем, есть ли заявка от friendId к userId
         Map<Long, Friendship> friendRequests = friendships.get(friendId);
-        if (friendRequests == null) {
+        if (friendRequests == null || !friendRequests.containsKey(userId)) {
             throw new IllegalStateException("Заявки нет");
         }
         Friendship request = friendRequests.get(userId);
-        if (request == null || !FriendshipStatus.PENDING.name().equals(request.getStatus())) {
+        if (!FriendshipStatus.PENDING.name().equals(request.getStatus())) {
             throw new IllegalStateException("Заявки нет");
         }
-        // Обновляем статус на CONFIRMED в обеих сторонах
+        // Обновляем статус
         request.setStatus(FriendshipStatus.CONFIRMED.name());
         request.setRequestTime(LocalDateTime.now());
 
-        // Здесь нужно обновить существующую запись у userId, если она есть, а не создавать новую
+        // Создаем или обновляем обратную запись для двусторонней дружбы
         Map<Long, Friendship> userFriends = friendships.computeIfAbsent(userId, k -> new ConcurrentHashMap<>());
         Friendship reciprocal = userFriends.get(friendId);
         if (reciprocal == null) {
@@ -60,6 +60,9 @@ public class InMemoryFriendshipStorage {
     }
 
     public void removeFriend(Long userId, Long friendId) {
+        if (!userExists(userId) || !userExists(friendId)) {
+            throw new IllegalArgumentException("Пользователь не найден");
+        }
         Map<Long, Friendship> userFriends = friendships.get(userId);
         if (userFriends != null) {
             userFriends.remove(friendId);
@@ -71,6 +74,9 @@ public class InMemoryFriendshipStorage {
     }
 
     public List<Long> getFriends(Long userId) {
+        if (!userExists(userId)) {
+            throw new NoSuchElementException("Пользователь не найден");
+        }
         Map<Long, Friendship> userFriends = friendships.get(userId);
         if (userFriends == null) {
             return Collections.emptyList();
@@ -85,6 +91,9 @@ public class InMemoryFriendshipStorage {
     }
 
     public List<Long> getCommonFriends(Long userId1, Long userId2) {
+        if (!userExists(userId1) || !userExists(userId2)) {
+            throw new NoSuchElementException("Пользователь не найден");
+        }
         Set<Long> friends1 = new HashSet<>(getFriends(userId1));
         Set<Long> friends2 = new HashSet<>(getFriends(userId2));
         friends1.retainAll(friends2);

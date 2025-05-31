@@ -29,7 +29,7 @@ public class UserService {
             User user = userOpt.get();
             Set<Long> friendIds = friendshipService.getFriends(id);
             user.setFriends(friendIds);
-            return Optional.of(user);  // вернуть пользователя с обновленными друзьями
+            return Optional.of(user);
         }
         return Optional.empty();
     }
@@ -69,7 +69,6 @@ public class UserService {
     public UserDto getUserWithFriendsDto(Long userId, int depth) {
         User user = userStorage.getById(userId)
                 .orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-        // Обновляем поле friends у user из friendshipService
         Set<Long> friendIds = friendshipService.getFriends(userId);
         user.setFriends(friendIds);
         return toUserDto(user, depth);
