@@ -47,10 +47,22 @@ public class FilmControllerTest {
             stmt.execute("DELETE FROM MPA");
 
             // Insert genres
-            stmt.execute("MERGE INTO GENRES (id, name) VALUES (1, 'Комедия'), (2, 'Драма'), (3, 'Триллер'), (4, 'Боевик'), (5, 'Мелодрама');");
+            stmt.execute("DELETE FROM GENRES");
+            stmt.execute("MERGE INTO GENRES (id, name) VALUES " +
+                    "(1, 'Комедия'), " +
+                    "(2, 'Драма'), " +
+                    "(3, 'Мультфильм'), " +
+                    "(4, 'Триллер'), " +
+                    "(5, 'Документальный'), " +
+                    "(6, 'Боевик');");
 
-            // Insert MPA ratings
-            stmt.execute("MERGE INTO MPA (id, name) VALUES (1, 'G'), (2, 'PG'), (3, 'PG-13'), (4, 'R'), (5, 'NC-17');");
+            stmt.execute("DELETE FROM MPA");
+            stmt.execute("MERGE INTO MPA (id, name) VALUES " +
+                    "(1, 'G'), " +
+                    "(2, 'PG'), " +
+                    "(3, 'PG-13'), " +
+                    "(4, 'R'), " +
+                    "(5, 'NC-17');");
 
             // Insert users with ids 1 to 20
             for (int i = 1; i <= 20; i++) {

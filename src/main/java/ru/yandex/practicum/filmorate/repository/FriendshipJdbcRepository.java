@@ -24,36 +24,24 @@ public class FriendshipJdbcRepository {
         return count != null && count > 0;
     }
 
-    /**
-     * Проверяет, есть ли запись (заявка или дружба) между двумя пользователями в любом направлении
-     */
     public boolean existsFriendship(Long userId, Long friendId) {
         String sql = "SELECT COUNT(*) FROM FRIENDS WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, friendId, friendId, userId);
         return count != null && count > 0;
     }
 
-    /**
-     * Проверяет, есть ли заявка от fromUser к toUser (status = 'PENDING')
-     */
     public boolean existsPendingRequest(Long fromUser, Long toUser) {
         String sql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ? AND status = 'PENDING'";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, fromUser, toUser);
         return count != null && count > 0;
     }
 
-    /**
-     * Проверяет, есть ли подтвержденная дружба между двумя пользователями (status = 'CONFIRMED' в любом направлении)
-     */
     public boolean existsConfirmedFriendship(Long userId, Long friendId) {
         String sql = "SELECT COUNT(*) FROM FRIENDS WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = 'CONFIRMED'";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, friendId, friendId, userId);
         return count != null && count > 0;
     }
 
-    /**
-     * Добавляет заявку в друзья (одна запись)
-     */
     public void addFriend(Long userId, Long friendId) {
         if (!userExists(userId) || !userExists(friendId)) {
             throw new IllegalArgumentException("Пользователь не найден");
@@ -62,27 +50,28 @@ public class FriendshipJdbcRepository {
             throw new IllegalStateException("Заявка или дружба уже существует");
         }
         String sql = "INSERT INTO FRIENDS (user_id, friend_id, status, request_time) VALUES (?, ?, 'PENDING', ?)";
-        jdbcTemplate.update(sql, userId, friendId, Timestamp.valueOf(LocalDateTime.now()));
+        int updated = jdbcTemplate.update(sql, userId, friendId, Timestamp.valueOf(LocalDateTime.now()));
+        System.out.println("addFriend: Добавлена заявка в друзья от пользователя " + userId + " к пользователю " + friendId + ". Обновлено строк: " + updated);
+        if (updated == 0) {
+            throw new RuntimeException("Не удалось добавить заявку в друзья");
+        }
     }
 
-    /**
-     * Подтверждает заявку: обновляет статус заявки с PENDING на CONFIRMED
-     */
     public void confirmFriend(Long userId, Long friendId) {
-        // Проверяем, что есть заявка от friendId к userId
         String checkSql = "SELECT COUNT(*) FROM FRIENDS WHERE user_id = ? AND friend_id = ? AND status = 'PENDING'";
         Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, friendId, userId);
+        System.out.println("confirmFriend: Проверка заявки от " + friendId + " к " + userId + ". Найдено заявок: " + count);
         if (count == null || count == 0) {
             throw new IllegalStateException("Заявки нет");
         }
-        // Обновляем статус заявки на CONFIRMED
         String updateSql = "UPDATE FRIENDS SET status = 'CONFIRMED', request_time = ? WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(updateSql, Timestamp.valueOf(LocalDateTime.now()), friendId, userId);
+        int updated = jdbcTemplate.update(updateSql, Timestamp.valueOf(LocalDateTime.now()), friendId, userId);
+        System.out.println("confirmFriend: Подтверждена заявка от " + friendId + " к " + userId + ". Обновлено строк: " + updated);
+        if (updated == 0) {
+            throw new RuntimeException("Не удалось подтвердить заявку");
+        }
     }
 
-    /**
-     * Удаляет дружбу или заявку (одна запись)
-     */
     public void removeFriend(Long userId, Long friendId) {
         if (!userExists(userId) || !userExists(friendId)) {
             throw new IllegalArgumentException("Пользователь не найден");
@@ -91,9 +80,6 @@ public class FriendshipJdbcRepository {
         jdbcTemplate.update(sql, userId, friendId, friendId, userId);
     }
 
-    /**
-     * Возвращает список id друзей пользователя (только подтвержденные дружбы)
-     */
     public List<Long> getFriends(Long userId) {
         if (!userExists(userId)) {
             throw new NoSuchElementException("Пользователь не найден");
@@ -103,9 +89,6 @@ public class FriendshipJdbcRepository {
         return jdbcTemplate.queryForList(sql, Long.class, userId, userId, userId);
     }
 
-    /**
-     * Возвращает список общих друзей (id) двух пользователей (только подтвержденные дружбы)
-     */
     public List<Long> getCommonFriends(Long userId1, Long userId2) {
         if (!userExists(userId1) || !userExists(userId2)) {
             throw new NoSuchElementException("Пользователь не найден");
