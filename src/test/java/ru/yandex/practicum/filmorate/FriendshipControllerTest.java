@@ -163,4 +163,5 @@ public class FriendshipControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[?(@.id == %d)]", f2).exists());
     }
+
 }

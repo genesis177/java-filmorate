@@ -27,12 +27,13 @@ public class UserController {
     }
 
     @PutMapping("{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         if (!userService.existsById(id)) {
             throw new NoSuchElementException("User not found");
         }
         user.setId(id);
-        return userService.update(user);
+        User updatedUser = userService.update(user);
+        return ResponseEntity.ok(updatedUser);
     }
 
 
