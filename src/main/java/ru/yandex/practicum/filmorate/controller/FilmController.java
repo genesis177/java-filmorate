@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -9,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,23 +27,16 @@ public class FilmController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateFilm(@PathVariable Integer id, @RequestBody Film film) {
-        try {
-            ValidationUtil.validateFilm(film, filmService);
-            film.setId(id);
-            Optional<Film> updatedFilm = filmService.update(film);
-            if (updatedFilm.isPresent()) {
-                return ResponseEntity.ok(updatedFilm.get());
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(java.util.Collections.singletonMap("error", "Фильм не найден"));
-            }
-        } catch (ValidationException e) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
+    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateFilm(@RequestBody Film film) {
+        ValidationUtil.validateFilm(film, filmService);
+        Optional<Film> updatedFilm = filmService.update(film);
+        if (updatedFilm.isPresent()) {
+            return ResponseEntity.ok(updatedFilm.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "Фильм не найден"));
         }
-
     }
 
     @GetMapping("/{id}")

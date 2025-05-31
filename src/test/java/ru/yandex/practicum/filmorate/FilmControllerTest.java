@@ -198,7 +198,7 @@ public class FilmControllerTest {
         updated.setMpa(new Mpa(1, null));
         updated.setGenres(Set.of(new Genre(1, null)));
 
-        mvc.perform(put("/films/" + id)
+        mvc.perform(put("/films")  // <-- убрали /{id}
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updated)))
                 .andExpect(status().isOk())
@@ -208,6 +208,7 @@ public class FilmControllerTest {
     @Test
     public void updateUnknown_ShouldReturn404() throws Exception {
         var film = new Film();
+        film.setId(99999);  // обязательно указать id в теле
         film.setName("Not Exist");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(2000, 1, 1));
@@ -215,10 +216,11 @@ public class FilmControllerTest {
         film.setMpa(new Mpa(1, null));
         film.setGenres(Set.of(new Genre(1, null)));
 
-        mvc.perform(put("/films/99999")
+        mvc.perform(put("/films")  // <-- убрали /99999
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(film)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Фильм не найден"));
     }
 
     @Test
