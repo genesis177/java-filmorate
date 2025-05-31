@@ -20,4 +20,8 @@ public class GenreService {
     public Optional<Genre> getById(int id) {
         return genreStorage.getById(id);
     }
+
+    public boolean existsById(int id) {
+        return genreStorage.existsById(id);
+    }
 }

@@ -14,4 +14,5 @@ public interface GenreStorage {
     boolean existsById(Integer id);
 
     Set<Genre> resolveGenres(Set<Genre> genres);
+
 }

@@ -26,8 +26,11 @@ public class FriendshipService {
     public void sendFriendRequest(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        if (friendshipRepository.existsFriendship(userId, friendId)) {
+        if (friendshipRepository.existsConfirmedFriendship(userId, friendId)) {
             throw new IllegalStateException("Дружба уже есть");
+        }
+        if (friendshipRepository.existsPendingRequest(userId, friendId)) {
+            throw new IllegalStateException("Заявка уже отправлена");
         }
         friendshipRepository.addFriend(userId, friendId);
     }
@@ -35,18 +38,16 @@ public class FriendshipService {
     public void confirmFriendship(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        // Проверяем, что заявка существует от friendId к userId
-        if (!friendshipRepository.existsFriendship(userId, friendId)) {
+        if (!friendshipRepository.existsPendingRequest(friendId, userId)) {
             throw new IllegalStateException("Заявки нет");
         }
         friendshipRepository.confirmFriend(userId, friendId);
-
     }
 
     public void removeFriend(Long userId, Long friendId) {
         checkUserExists(userId);
         checkUserExists(friendId);
-        if (!friendshipRepository.existsFriendship(userId, friendId)) {
+        if (!friendshipRepository.existsConfirmedFriendship(userId, friendId)) {
             return;
         }
         friendshipRepository.removeFriend(userId, friendId);

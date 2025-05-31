@@ -3,12 +3,12 @@ package ru.yandex.practicum.filmorate.util;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.time.LocalDate;
 
 public class ValidationUtil {
-    public static void validateFilm(Film film, FilmService filmService) {
+    public static void validateFilm(Film film, GenreService genreService) {
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Название не может быть пустым");
         }
@@ -27,9 +27,9 @@ public class ValidationUtil {
         if (film.getGenres() == null) {
             throw new ValidationException("Жанры не должны быть null");
         }
-        if (filmService != null) {
+        if (genreService != null) {
             for (var genre : film.getGenres()) {
-                if (!filmService.existsGenreById(genre.getId())) {
+                if (!genreService.existsById(genre.getId())) {
                     throw new ValidationException("Жанр с id " + genre.getId() + " не существует");
                 }
             }

@@ -18,8 +18,9 @@ public class UserService {
         return userStorage.add(user);
     }
 
-    public Optional<User> updateUser(User user) {
-        return userStorage.update(user);
+    public User updateUser(User user) {
+        return userStorage.update(user)
+                .orElseThrow(() -> new NoSuchElementException("User with id " + user.getId() + " not found"));
     }
 
     public Optional<User> getById(Long id) {

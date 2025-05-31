@@ -27,17 +27,14 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         ValidationUtil.validateUser(user);
         user.setId(id);
-        return userService.updateUser(user)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+        User updatedUser = userService.updateUser(user);
+        return ResponseEntity.ok(updatedUser);
     }
-
     @PutMapping
     public ResponseEntity<User> updateUserWithoutId(@RequestBody User user) {
         ValidationUtil.validateUser(user);
-        return userService.updateUser(user)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+        User updatedUser = userService.updateUser(user);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/{id}")

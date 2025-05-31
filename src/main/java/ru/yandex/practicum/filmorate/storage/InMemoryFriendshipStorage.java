@@ -47,8 +47,16 @@ public class InMemoryFriendshipStorage {
         request.setStatus(FriendshipStatus.CONFIRMED.name());
         request.setRequestTime(LocalDateTime.now());
 
-        friendships.computeIfAbsent(userId, k -> new ConcurrentHashMap<>())
-                .put(friendId, new Friendship(userId, friendId, FriendshipStatus.CONFIRMED.name(), LocalDateTime.now()));
+        // Здесь нужно обновить существующую запись у userId, если она есть, а не создавать новую
+        Map<Long, Friendship> userFriends = friendships.computeIfAbsent(userId, k -> new ConcurrentHashMap<>());
+        Friendship reciprocal = userFriends.get(friendId);
+        if (reciprocal == null) {
+            reciprocal = new Friendship(userId, friendId, FriendshipStatus.CONFIRMED.name(), LocalDateTime.now());
+            userFriends.put(friendId, reciprocal);
+        } else {
+            reciprocal.setStatus(FriendshipStatus.CONFIRMED.name());
+            reciprocal.setRequestTime(LocalDateTime.now());
+        }
     }
 
     public void removeFriend(Long userId, Long friendId) {

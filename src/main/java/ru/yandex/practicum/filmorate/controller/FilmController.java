@@ -5,9 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
 import java.util.Collections;
@@ -19,17 +19,18 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FilmController {
     private final FilmService filmService;
+    private final GenreService genreService;  // Добавляем GenreService
 
     @PostMapping
     public ResponseEntity<Film> createFilm(@RequestBody Film film) {
-        ValidationUtil.validateFilm(film, filmService);
+        ValidationUtil.validateFilm(film, genreService);
         Film created = filmService.add(film);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateFilm(@RequestBody Film film) {
-        ValidationUtil.validateFilm(film, filmService);
+        ValidationUtil.validateFilm(film, genreService);
         Optional<Film> updatedFilm = filmService.update(film);
         if (updatedFilm.isPresent()) {
             return ResponseEntity.ok(updatedFilm.get());
