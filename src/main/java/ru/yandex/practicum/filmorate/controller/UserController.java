@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.model.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.util.ValidationUtil;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -27,15 +26,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User user) {
-        ValidationUtil.validateUser(user);
+    @PutMapping("{id}")
+    public User updateUser(@PathVariable Long id, @RequestBody User user) {
+        if (!userService.existsById(id)) {
+            throw new NoSuchElementException("User not found");
+        }
         user.setId(id);
-        Optional<User> updatedUser = userService.updateUser(user);
-        return updatedUser
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body((User) Collections.singletonMap("error", "User not found")));
+        return userService.update(user);
     }
 
 
@@ -76,4 +73,5 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }

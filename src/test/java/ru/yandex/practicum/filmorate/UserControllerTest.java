@@ -155,7 +155,8 @@ public class UserControllerTest {
         mvc.perform(put("/users/99999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("User not found"));
     }
 
     @Test

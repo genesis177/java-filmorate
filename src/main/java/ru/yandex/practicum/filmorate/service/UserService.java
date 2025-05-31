@@ -99,4 +99,13 @@ public class UserService {
 
         return dto;
     }
+
+    public boolean existsById(Long id) {
+        return userStorage.getById(id).isPresent();
+    }
+
+    public User update(User user) {
+        return updateUser(user)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+    }
 }
