@@ -16,9 +16,15 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
     private final UserService userService;
 
-    // Добавление заявки в друзья (POST)
+    // Отправка заявки в друзья (PUT или POST)
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<Void> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
+        friendshipService.sendFriendRequest(id, friendId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<Void> addFriendPost(@PathVariable Long id, @PathVariable Long friendId) {
         friendshipService.sendFriendRequest(id, friendId);
         return ResponseEntity.ok().build();
     }
@@ -38,30 +44,23 @@ public class FriendshipController {
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             if ("Дружба не найдена".equals(e.getMessage())) {
-                // Возвращаем 200, если дружба не найдена
                 return ResponseEntity.ok().build();
             }
             throw e;
         }
     }
 
-    // Получить список друзей (GET)
+    // Получение списка друзей (GET)
     @GetMapping("/{id}/friends")
     public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
         List<User> friends = userService.getFriends(id);
         return ResponseEntity.ok(friends);
     }
 
-    // Получить общих друзей (GET)
+    // Получение общих друзей (GET)
     @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(commonFriends);
-    }
-
-    @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<Void> addFriendPut(@PathVariable Long id, @PathVariable Long friendId) {
-        friendshipService.sendFriendRequest(id, friendId);
-        return ResponseEntity.ok().build();
     }
 }
